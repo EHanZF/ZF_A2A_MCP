@@ -1,0 +1,11 @@
+# DISABLED WORKFLOW — Placeholder to override ghost GitHub Actions reference
+# This workflow intentionally has *no triggers* and will never run.
+
+on: []
+name: Disabled Main Workflow
+
+jobs:
+  none:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow is intentionally disabled."
