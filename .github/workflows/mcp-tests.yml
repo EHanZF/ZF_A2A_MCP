@@ -39,7 +39,7 @@ jobs:
       - name: Run MCP Unit Test Runner
         run: |
           echo "Running MCP tests on Python ${{ matrix.python-version }}..."
-          python tests/mcp_unit_test.py mcp/a2a-mcp.yaml
+          python ZF_A2A_MCP/tests/mcp_unit_test.py ZF_A2A_MCP/mcp/a2a-mcp.yaml
 
       - name: Success (Python ${{ matrix.python-version }})
         if: ${{ success() }}
