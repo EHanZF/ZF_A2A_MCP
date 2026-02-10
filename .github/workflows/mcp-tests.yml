@@ -1,22 +1,13 @@
-# -------------------------------------------------------------------------
-# ZF A2A MCP — Deterministic Tool Bus Validation Workflow
-#
-# This GitHub Actions workflow validates the canonical MCP Tool Bus used
-# for deterministic agent alignment (A2A). It performs:
-#
-# 1. MCP Manifest Validation
-#    - Loads mcp/a2a-mcp.yaml
-#    - Ensures required sections exist (tools, capabilities, a2a)
-#
-# 2. Capability Vector Verification
-#    - Recomputes tool_vector from tools[]
-#    - Ensures it matches:
-#        - capabilities.tool_vector
-#        - a2a.canonical_tool_vector
-#
-# 3. A2A Handshake Simulation
-#    - Ensures all agents in a2a.agents expose the same allowed_tools
-#      as the canonical tool vector
-#
-# Any mismatch causes this workflow to fail, enforcing deterministic,
-# reproducible MCP configuration for multi-agent systems.
+name: MCP Unit Tests (Multi-Python)
+
+on:
+  push:
+    branches: ["main", "develop", "*"]
+  pull_request:
+    branches: ["main", "develop", "*"]
+  schedule:
+    - cron: "0 2 * * *"  # 02:00 UTC nightly
+  workflow_dispatch: {}
+
+jobs:
+  # ... (same jobs section as above)
