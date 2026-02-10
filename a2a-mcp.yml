@@ -1,0 +1,11 @@
+repo-root/
+  mcp/
+    a2a-mcp.yaml        # <-- this file
+  tool_bus_mcp_server/
+    __init__.py
+    server_impl.py
+  docs/
+    server-overview.md
+  data/
+    datasets_index.json
+``
