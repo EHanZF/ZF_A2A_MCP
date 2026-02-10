@@ -6,22 +6,17 @@
 #
 # 1. MCP Manifest Validation
 #    - Loads mcp/a2a-mcp.yaml
-#    - Ensures strict JSON Schema correctness
-#    - Confirms all tools are registered and normalized
+#    - Ensures required sections exist (tools, capabilities, a2a)
 #
 # 2. Capability Vector Verification
-#    - Recomputes tool_vector from the tools list
+#    - Recomputes tool_vector from tools[]
 #    - Ensures it matches:
-#         capabilities.tool_vector
-#         a2a.canonical_tool_vector
+#        - capabilities.tool_vector
+#        - a2a.canonical_tool_vector
 #
 # 3. A2A Handshake Simulation
-#    - Simulates Agent A and Agent B capability exchange
-#    - Confirms both align to the canonical tool bus
+#    - Ensures all agents in a2a.agents expose the same allowed_tools
+#      as the canonical tool vector
 #
-# 4. Deterministic Output Enforcement
-#    - Fails CI if ANY mismatch occurs
-#
-# This workflow ensures the ZF_A2A_MCP repository always produces
-# deterministic, reproducible MCP artifacts for multi-agent systems.
-# -------------------------------------------------------------------------
+# Any mismatch causes this workflow to fail, enforcing deterministic,
+# reproducible MCP configuration for multi-agent systems.
