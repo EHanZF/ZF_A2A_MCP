@@ -111,4 +111,3 @@ On every push and pull request to `main`:
 4. A2A agent `allowed_tools` are validated against the canonical tool vector.
 
 Any mismatch causes the workflow to fail, enforcing deterministic, reproducible MCP configuration.
-``
