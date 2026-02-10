@@ -24,26 +24,22 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          # Optionally specify requirements file for cache hashing
-          cache-dependency-path: |
-            requirements.txt
-            pyproject.toml
-            setup.cfg
+          cache-dependency-path: requirements.txt
 
-      - name: Upgrade pip & install dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # If your repo has no requirements.txt yet, this still works
-          pip install pyyaml
+          pip install -r requirements.txt
 
       - name: Run MCP Unit Test Runner
         run: |
           echo "Running MCP tests on Python ${{ matrix.python-version }}..."
           python ZF_A2A_MCP/tests/mcp_unit_test.py ZF_A2A_MCP/mcp/a2a-mcp.yaml
-      - name: Success (Python ${{ matrix.python-version }})
+
+      - name: Success 
         if: ${{ success() }}
         run: echo "✔ MCP tests passed on Python ${{ matrix.python-version }}"
 
-      - name: Failure (Python ${{ matrix.python-version }})
+      - name: Failure
         if: ${{ failure() }}
         run: echo "❌ MCP tests FAILED on Python ${{ matrix.python-version }}"
