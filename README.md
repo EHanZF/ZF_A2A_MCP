@@ -92,3 +92,23 @@ tools:
     input_schema:
       type: "object"
       additionalProperties: false
+
+    ## CI Status
+
+This repository uses a GitHub Actions workflow to validate the MCP Tool Bus configuration:
+
+- **Workflow:** `MCP Unit Tests (Multi-Python)`
+- **File:** `.github/workflows/mcp-tests.yml`
+- **Python versions:** 3.10, 3.11, 3.12
+
+On every push and pull request to `main`:
+
+1. Dependencies are installed from `requirements.txt`.
+2. `tests/mcp_unit_test.py` is executed against `mcp/a2a-mcp.yaml`.
+3. The tool vector is recomputed from `tools[]` and compared against:
+   - `capabilities.tool_vector`
+   - `a2a.canonical_tool_vector`
+4. A2A agent `allowed_tools` are validated against the canonical tool vector.
+
+Any mismatch causes the workflow to fail, enforcing deterministic, reproducible MCP configuration.
+``
