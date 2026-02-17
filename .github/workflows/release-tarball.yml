@@ -1,0 +1,25 @@
+name: release-tarball
+on:
+  push:
+    tags: [ "v*.*.*" ]
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Create tarball
+        run: |
+          mkdir -p dist
+          tar --exclude='**/node_modules' \
+              --exclude='.git' \
+              --exclude='dist' \
+              -czf dist/zf_a2a_orchestration_${GITHUB_REF_NAME}.tar.gz .
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
+          generate_release_notes: true
