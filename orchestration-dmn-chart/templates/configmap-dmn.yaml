@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.dmn.configName }}
+data:
+  {{ .Values.dmn.configKey }}: |
+{{ .Values.dmn.model | indent 4 }}
