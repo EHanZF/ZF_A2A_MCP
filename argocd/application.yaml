@@ -1,18 +1,27 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: zf-mcp-agent
+  name: orchestration-dmn
   namespace: argocd
 spec:
-  project: zf-project
+  project: default
+
   source:
-    repoURL: https://github.com/zf/zf-mcp-agent.git
+    repoURL: 'https://github.com/<org>/<repo>.git'
     targetRevision: main
-    path: helm
+    path: orchestration-dmn-chart
+
+    helm:
+      valueFiles:
+        - values.yaml
+
   destination:
-    namespace: zf-mcp
-    server: https://kubernetes.default.svc
+    server: 'https://kubernetes.default.svc'
+    namespace: orchestration
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
