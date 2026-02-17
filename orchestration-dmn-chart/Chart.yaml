@@ -1,0 +1,6 @@
+apiVersion: v2
+name: orchestration-dmn
+description: MCP / DMN orchestration service for OrchestrationDecisionModel
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
