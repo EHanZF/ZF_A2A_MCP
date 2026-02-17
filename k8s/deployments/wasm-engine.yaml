@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wasm-engine
+  namespace: zf-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wasm-engine
+  template:
+    metadata:
+      labels:
+        app: wasm-engine
+    spec:
+      containers:
+        - name: wasm-engine
+          image: ghcr.io/zf/wasm-engine:latest
+          ports:
+            - containerPort: 9000
