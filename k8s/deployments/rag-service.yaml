@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-service
+  namespace: zf-mcp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rag-service
+  template:
+    metadata:
+      labels:
+        app: rag-service
+    spec:
+      containers:
+        - name: rag-service
+          image: ghcr.io/zf/rag-service:latest
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: /rag-data
+              name: rag-pv
+      volumes:
+        - name: rag-pv
+          emptyDir: {}    # replace with PVC for long-term storage
