@@ -1,0 +1,12 @@
+name: validate-dmn
+on:
+  push:
+    paths: ["dmn/OrchestrationDecisionModel.json", ".github/workflows/validate-dmn.yml"]
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint JSON
+        run: jq '.' dmn/OrchestrationDecisionModel.json >/dev/null
