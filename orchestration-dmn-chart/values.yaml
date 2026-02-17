@@ -1,0 +1,88 @@
+image:
+  repository: ghcr.io/<org>/<repo>/orchestration-mcp
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+dmn:
+  configName: orchestration-dmn-model
+  configKey: dmn-model.json
+  model: |
+    {
+      "dmn-model": {
+        "id": "dmn-orchestration-001",
+        "name": "OrchestrationDecisionModel",
+        "version": "1.0.0",
+        "description": "DMN model governing request routing, skill policy, agent load, and orchestration planning for the IntentManifold Engine.",
+        "inputs": [
+          { "name": "systemStatus", "type": "string" },
+          { "name": "requestType", "type": "string" },
+          { "name": "skillCategory", "type": "string" },
+          { "name": "securityLevel", "type": "string" },
+          { "name": "agentLoad", "type": "string" },
+          { "name": "contextComplexity", "type": "string" }
+        ],
+        "decisions": [
+          {
+            "id": "dec-requestRouting",
+            "name": "Request Routing",
+            "hitPolicy": "FIRST",
+            "inputs": ["systemStatus", "requestType"],
+            "outputs": ["route"],
+            "rules": [
+              ["stable", "command", "local-cache"],
+              ["stable", "analysis", "primary-engine"],
+              ["unstable", "command", "fallback-orchestration"],
+              ["unstable", "analysis", "degraded-cache"],
+              ["offline", "-", "reject"]
+            ]
+          },
+          {
+            "id": "dec-skillPolicy",
+            "name": "Skill Policy",
+            "hitPolicy": "FIRST",
+            "inputs": ["skillCategory", "securityLevel"],
+            "outputs": ["policy"],
+            "rules": [
+              ["core", "low", "allow"],
+              ["core", "medium", "allow"],
+              ["core", "high", "restricted"],
+              ["advanced", "medium", "restricted"],
+              ["advanced", "high", "deny"],
+              ["-", "critical", "deny"]
+            ]
+          },
+          {
+            "id": "dec-agentCapacity",
+            "name": "Agent Capacity",
+            "hitPolicy": "FIRST",
+            "inputs": ["agentLoad", "contextComplexity"],
+            "outputs": ["capacity"],
+            "rules": [
+              ["low", "simple", "light"],
+              ["medium", "simple", "medium"],
+              ["medium", "complex", "heavy"],
+              ["high", "-", "heavy"]
+            ]
+          },
+          {
+            "id": "dec-orchestrationPlan",
+            "name": "Orchestration Plan",
+            "hitPolicy": "FIRST",
+            "inputs": ["route", "policy", "capacity"],
+            "outputs": ["plan", "action"],
+            "rules": [
+              ["local-cache", "allow", "light", "direct-exec", "execute"],
+              ["primary-engine", "allow", "medium", "priority-exec", "execute"],
+              ["primary-engine", "restricted", "medium", "guarded-exec", "review"],
+              ["fallback-orchestration", "allow", "heavy", "retry-local", "reroute"],
+              ["degraded-cache", "restricted", "heavy", "handoff", "delegate"],
+              ["reject", "-", "-", "deny", "stop"]
+            ]
+          }
+        ]
+      }
+    }
