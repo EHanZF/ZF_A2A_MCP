@@ -1,16 +1,14 @@
-name = "zf-a2a-orchestration"
+name = "zf-a2a-edge"
 main = "src/index.ts"
 compatibility_date = "2026-02-16"
 
 [durable_objects]
-bindings = [
-  { name = "ONBOARDING_DO", class_name = "OnboardingDO" }
-]
+bindings = [{ name = "ONBOARDING_DO", class_name = "OnboardingDO" }]
 
 [[migrations]]
 tag = "v1"
 new_classes = ["OnboardingDO"]
 
 [vars]
-MCP_URL = "https://orchestration.example.com/mcp"   # <-- point at your MCP service
+VECTOR_BUS_URL = "https://vector.example.com/v1"
 JWT_TTL_SECONDS = "600"
