@@ -1,0 +1,45 @@
+name: ZF MCP Agent Release Packaging
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  generate-repo:
+    name: Generate Repo Structure (if missing)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create repo skeleton if empty
+        run: |
+          if [ -z "$(ls -A .)" ]; then
+            echo "⚠️ Repo empty — generating structure..."
+            mkdir -p mcp-server src wasm-agent public/.well-known agent
+            cat <<EOF > README.md
+# ZF MCP Agent
+Monorepo containing:
+- MCP Server
+- WASM Engine
+- Plugin Host (Copilot API plugin)
+- Copilot Studio Agent
+EOF
+          else
+            echo "Repo already contains files — skipping."
+          fi
+
+      - name: Commit structure (only if new)
+        run: |
+          git config user.email "automation@zf.com"
+          git config user.name "ZF Automation"
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "Initialize repo structure"
+            git push
+          fi
