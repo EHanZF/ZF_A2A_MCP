@@ -1,0 +1,46 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: 
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & push images
+        run: |
+          docker build -t ghcr.io/zf/mcp-server:latest mcp-server
+          docker push ghcr.io/zf/mcp-server:latest
+          docker build -t ghcr.io/zf/plugin-host:latest plugin-host
+          docker push ghcr.io/zf/plugin-host:latest
+          docker build -t ghcr.io/zf/wasm-engine:latest wasm-engine
+          docker push ghcr.io/zf/wasm-engine:latest
+          docker build -t ghcr.io/zf/orchestrator:latest orchestrator
+          docker push ghcr.io/zf/orchestrator:latest
+          docker build -t ghcr.io/zf/rag-service:latest rag-service
+          docker push ghcr.io/zf/rag-service:latest
+
+      - name: Deploy via kubectl
+        uses: azure/k8s-deploy@v4
+        with:
+          manifests: |
+            k8s/deployments/*.yaml
+            k8s/services/*.yaml
+            k8s/ingress/*.yaml
+          images: |
+            ghcr.io/zf/mcp-server:latest
+            ghcr.io/zf/plugin-host:latest
+            ghcr.io/zf/wasm-engine:latest
+            ghcr.io/zf/orchestrator:latest
+            ghcr.io/zf/rag-service:latest
+          namespace: zf-mcp
+          kubectl-version: "latest"
