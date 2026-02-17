@@ -1,0 +1,39 @@
+name: build-and-push
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore: [ "**/*.md", "docs/**" ]
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Build MCP server
+        working-directory: mcp-server
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build DMN engine
+        working-directory: dmn-engine
+        run: |
+          npm ci
+          npm run build
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build+push MCP container
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}/orchestration-mcp:${{ github.sha }}
+          docker build -t $IMAGE mcp-server
+          docker push $IMAGE
