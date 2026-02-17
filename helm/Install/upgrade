@@ -1,0 +1,2 @@
+helm dependency build helm/mcp-stack
+helm upgrade --install mcp helm/mcp-stack -n mcp --create-namespace
