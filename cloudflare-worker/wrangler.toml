@@ -12,3 +12,16 @@ new_classes = ["OnboardingDO"]
 [vars]
 VECTOR_BUS_URL = "https://vector.example.com/v1"
 JWT_TTL_SECONDS = "600"
+
+[vars]
+VECTOR_INTERNAL_URL = "http://vector-bus.mcp.svc.cluster.local:8088"
+PG_HOST = "vector-bus-pg.mcp.svc.cluster.local"
+
+if (url.pathname.startsWith("/vector/")) {
+  const backend = env.VECTOR_INTERNAL_URL + url.pathname.replace("/vector", "");
+  return fetch(backend, {
+    method: req.method,
+    headers: req.headers,
+    body: req.method === "POST" ? await req.text() : undefined
+  });
+}
