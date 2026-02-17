@@ -33,3 +33,5 @@
     )
   )
 )
+
+wat2wasm physics_simd.wat -o physics_simd.wasm
