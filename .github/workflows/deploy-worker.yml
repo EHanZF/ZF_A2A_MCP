@@ -1,0 +1,23 @@
+name: deploy-worker
+on:
+  workflow_dispatch:
+  push:
+    paths: ["cloudflare-worker/**", ".github/workflows/deploy-worker.yml"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PNPM
+        uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - name: Install deps
+        working-directory: cloudflare-worker
+        run: pnpm install
+      - name: Publish Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: cloudflare-worker
