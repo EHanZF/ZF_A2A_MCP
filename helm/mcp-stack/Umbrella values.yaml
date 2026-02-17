@@ -1,0 +1,31 @@
+global:
+  imagePullPolicy: IfNotPresent
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "500m", memory: "512Mi" }
+
+mcp-bridge:
+  image: ghcr.io/zf/mcp-bridge:latest
+  replicas: 1
+  service: { type: ClusterIP, port: 3000 }
+
+mcp-server:
+  image: ghcr.io/zf/mcp-server:latest
+  replicas: 1
+  service: { type: ClusterIP, port: 8080 }
+
+rag-service:
+  image: ghcr.io/zf/rag-service:latest
+  replicas: 1
+  service: { type: ClusterIP, port: 8000 }
+
+orchestrator:
+  image: ghcr.io/zf/orchestrator:latest
+  replicas: 1
+  service: { type: ClusterIP, port: 7000 }
+
+plugin-host:
+  image: ghcr.io/zf/plugin-host:latest
+  replicas: 1
+  service: { type: ClusterIP, port: 8085 }
+``
