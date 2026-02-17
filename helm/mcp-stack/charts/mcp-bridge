@@ -1,0 +1,6 @@
+helm/mcp-stack/charts/mcp-bridge/
+  Chart.yaml
+  values.yaml
+  templates/
+    deployment.yaml
+    service.yaml
