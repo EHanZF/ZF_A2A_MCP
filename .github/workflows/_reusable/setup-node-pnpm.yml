@@ -1,0 +1,24 @@
+name: setup-node-pnpm
+on:
+  workflow_call:
+    inputs:
+      node: { type: string, required: false, default: '22' }
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # PNPM (cache store optional; keep it simple)
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # Node + cache based on lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node }}
+          cache: 'pnpm'
+
+      - name: Install deps (frozen lockfile)
+        run: pnpm install --frozen-lockfile
