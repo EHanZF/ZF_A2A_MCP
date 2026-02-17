@@ -12,4 +12,7 @@ export async function routeTask(payload: any) {
   // dispatch plan/action to A2A or MCP tool
   await mcpCall("core:dispatch_orchestration", { plan: out.plan, action: out.action, critic: out.critic });
   return out;
+  if (task.type === "review-actions")
+  return mcpCall("review_github_actions", {});
+
 }
