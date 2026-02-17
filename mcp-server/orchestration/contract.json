@@ -1,0 +1,41 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-contract.json",
+  "name": "orchestration",
+  "version": "1.0.0",
+  "description": "MCP server providing OrchestrationDecisionModel DMN generation for the IntentManifold Engine.",
+  "tools": [
+    {
+      "name": "generate_orchestration_dmn",
+      "type": "function",
+      "description": "Generate the full OrchestrationDecisionModel DMN JSON used by the IntentManifold Engine for deterministic planning.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": ["json"],
+            "description": "Output format"
+          }
+        },
+        "required": ["format"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "orchestration_dmn_schema",
+      "description": "Schema reference for OrchestrationDecisionModel",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "dmn-model": { "type": "object" }
+        }
+      }
+    }
+  ],
+  "rbac": {
+    "policies": {
+      "generate_orchestration_dmn": ["model.generate"]
+    }
+  }
+}
