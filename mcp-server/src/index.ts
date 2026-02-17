@@ -4,6 +4,9 @@ import { normalize } from "./skills/normalize_orchestration_context";
 import { evaluate } from "./skills/dmn_evaluate_orchestration";
 import { rag } from "./skills/rag_vector_query";
 import { getStatus } from "./skills/core_get_status";
+import { bootstrapMCPServer } from "./bootstrapMCPServer.js";
+
+bootstrapMCPServer(8080);
 
 const app = express();
 app.use(bodyParser.json());
