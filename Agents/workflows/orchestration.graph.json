@@ -1,0 +1,56 @@
+{
+  "graph": {
+    "id": "dmn-critic-orchestration",
+    "nodes": [
+      {
+        "id": "normalize",
+        "type": "tool",
+        "name": "normalize_orchestration_context",
+        "out": ["normalized"]
+      },
+      {
+        "id": "evaluate",
+        "type": "code",
+        "name": "dmn_critic_evaluator",
+        "module": "@dmn-engine/dmnEvaluator",
+        "fn": "evaluateOrchestrationWithCritic",
+        "in": ["normalized"],
+        "out": ["dmn_result", "critic"]
+      },
+      {
+        "id": "rag",
+        "type": "tool",
+        "name": "rag_vector_query",
+        "in": ["dmn_result"],
+        "out": ["rag_support"]
+      },
+      {
+        "id": "decide",
+        "type": "code",
+        "name": "compile_plan",
+        "module": "@agents/workflows/deciders",
+        "fn": "selectAction",
+        "in": ["dmn_result", "critic", "rag_support"],
+        "out": ["plan", "action"]
+      },
+      {
+        "id": "dispatch",
+        "type": "tool",
+        "name": "mcp_dispatch",
+        "in": ["plan", "action"],
+        "out": ["dispatch_status"]
+      }
+    ],
+    "edges": [
+      ["normalize", "evaluate"],
+      ["evaluate", "rag"],
+      ["evaluate", "decide"],
+      ["rag", "decide"],
+      ["decide", "dispatch"]
+    ],
+    "metadata": {
+      "description": "DMN Critic-driven orchestration pipeline",
+      "rbac": { "requiredRole": "orchestration-agent" }
+    }
+  }
+}
