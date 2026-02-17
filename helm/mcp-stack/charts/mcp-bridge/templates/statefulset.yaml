@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "vector-bus-pg.fullname" . }}
+spec:
+  serviceName: {{ include "vector-bus-pg.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "vector-bus-pg.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "vector-bus-pg.name" . }}
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.image }}
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.postgres.user }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgres.password }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgres.db }}
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.storage.size }}
