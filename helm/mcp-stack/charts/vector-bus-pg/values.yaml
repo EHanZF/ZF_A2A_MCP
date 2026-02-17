@@ -1,0 +1,18 @@
+image: postgres:15
+replicas: 1
+
+storage:
+  size: 20Gi
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+
+postgres:
+  user: vector
+  password: vectorpass
+  db: vectordb

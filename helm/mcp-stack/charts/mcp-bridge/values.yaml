@@ -1,3 +1,0 @@
-image: ghcr.io/zf/mcp-bridge:latest
-replicas: 1
-service: { type: ClusterIP, port: 3000 }
