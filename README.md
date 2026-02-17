@@ -1,113 +1,73 @@
-# Canonical ZF A2A MCP configuration for the Tool Bus
-# This file is meant to be identical for all agents participating in A2A.
-# It is designed to be reproducible and deterministic.
+ZF_A2A_MCP/
+├─ README.md
+├─ LICENSE
+├─ .gitignore
+├─ package.json
+├─ pnpm-lock.yaml
+├─ requirements.txt
 
-version: "1.0.0"
+├─ dmn/
+│  ├─ OrchestrationDecisionModel.json          # your DMN JSON (as provided)
+│  └─ schema.md
 
-server:
-  id: "tool-bus-mcp"
-  name: "Canonical Tool Bus MCP Server"
-  description: "Deterministic MCP tool bus for multi-agent alignment and A2A handshakes."
-  # Adjust to your actual server entrypoint in the GitHub repo:
-  runtime:
-    language: "python"
-    command: "python"
-    args:
-      - "-m"
-      - "tool_bus_mcp_server"    # e.g., module in the repo
-  repository:
-    type: "github"
-    url: "https://github.com/<org>/<repo>"   # <-- put your repo here
-    branch: "main"
-    # Optional: pin to a commit for determinism
-    # commit: "<full_commit_sha>"
+├─ mcp-server/
+│  ├─ package.json
+│  ├─ tsconfig.json
+│  ├─ src/
+│  │  ├─ index.ts                              # small MCP server exposing 4 tools (test-mode)
+│  │  ├─ skills/
+│  │  │  ├─ core_get_status.ts
+│  │  │  ├─ normalize_orchestration_context.ts
+│  │  │  ├─ dmn_evaluate_orchestration.ts
+│  │  │  └─ rag_vector_query.ts
+│  │  └─ utils/
+│  │     ├─ logger.ts
+│  │     └─ http.ts
+│  └─ Dockerfile
 
-capabilities:
-  # Normalized capability vector — must match for all agents
-  tool_vector:
-    get_status: 1
-    run_local_task: 1
-    query_public_dataset: 1
-    generate_report: 1
+├─ dmn-engine/
+│  ├─ package.json
+│  ├─ tsconfig.json
+│  └─ src/
+│     ├─ dmnEvaluator.ts                       # Critic evaluator (Read & Act with justification)
+│     └─ index.ts
 
-tools:
-  - name: "get_status"
-    description: "Return the current health, version, and uptime info for the tool bus."
-    input_schema:
-      type: "object"
-      additionalProperties: false
-      properties:
-        verbose:
-          type: "boolean"
-          description: "If true, include extended diagnostic details."
-      required: []
-    output_schema:
-      type: "object"
-      additionalProperties: false
-      properties:
-        status:
-          type: "string"
-          enum: ["ok", "degraded", "error"]
-        version:
-          type: "string"
-        uptime_seconds:
-          type: "number"
-        details:
-          type: "object"
-          additionalProperties: true
-      required: ["status", "version", "uptime_seconds"]
+├─ Agents/
+│  ├─ package.json
+│  ├─ tsconfig.json
+│  ├─ workflows/
+│  │  ├─ orchestration.graph.json              # LangGraph workflow spec (DMN Critic + actions)
+│  │  └─ index.ts                              # Runner wiring LangGraph nodes
+│  ├─ swarm/
+│  │  ├─ registry.ts                           # agent registry & roles
+│  │  ├─ swarmRouter.ts                        # orchestration over roles
+│  │  └─ tokens.ts                             # JWT/session tokens passed across nodes
+│  └─ utils/
+│     ├─ mcpTransport.ts
+│     └─ ragClient.ts
 
-  - name: "run_local_task"
-    description: "Execute a deterministic local task on the tool bus host."
-    input_schema:
-      type: "object"
-      additionalProperties: false
-      properties:
-        task_id:
-          type: "string"
-          description: "Stable identifier for the task to run."
-        parameters:
-          type: "object"
-          description: "Task-specific parameters."
-          additionalProperties: true
-      required: ["task_id"]
-    output_schema:
-      type: "object"
-      additionalProperties: false
-      properties:
-        task_id:
-          type: "string"
-        status:
-          type: "string"
-          enum: ["queued", "running", "completed", "failed"]
-        result:
-          type: ["object", "null"]
-          additionalProperties: true
-        error:
-          type: ["string", "null"]
-      required: ["task_id", "status"]
+├─ cloudflare-worker/
+│  ├─ wrangler.toml
+│  └─ src/
+│     ├─ index.ts                              # Worker entry: static + /onboard WS
+│     ├─ onboarding-do.ts                      # Durable Object for WS + JWT mint
+│     └─ jwt.ts
 
-  - name: "query_public_dataset"
-    description: "Run a deterministic query against a local public dataset snapshot."
-    input_schema:
-      type: "object"
-      additionalProperties: false
+├─ orchestration-dmn-chart/                    # kept, the Helm chart lives here
+│  ├─ Chart.yaml
+│  ├─ values.yaml
+│  └─ templates/
+│     ├─ configmap-dmn.yaml
+│     ├─ deployment.yaml
+│     └─ service.yaml
 
-    ## CI Status
+├─ .github/
+│  └─ workflows/
+│     ├─ validate-dmn.yml
+│     ├─ build-and-push.yml
+│     ├─ deploy-worker.yml
+│     └─ release-tarball.yml
 
-This repository uses a GitHub Actions workflow to validate the MCP Tool Bus configuration:
-
-- **Workflow:** `MCP Unit Tests (Multi-Python)`
-- **File:** `.github/workflows/mcp-tests.yml`
-- **Python versions:** 3.10, 3.11, 3.12
-
-On every push and pull request to `main`:
-
-1. Dependencies are installed from `requirements.txt`.
-2. `tests/mcp_unit_test.py` is executed against `mcp/a2a-mcp.yaml`.
-3. The tool vector is recomputed from `tools[]` and compared against:
-   - `capabilities.tool_vector`
-   - `a2a.canonical_tool_vector`
-4. A2A agent `allowed_tools` are validated against the canonical tool vector.
-
-Any mismatch causes the workflow to fail, enforcing deterministic, reproducible MCP configuration.
+└─ k8s/                                        # optional, if you keep plain manifests alongside Helm
+   ├─ namespace.yaml
+   └─ ingress.yaml
