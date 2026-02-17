@@ -1,0 +1,20 @@
+name: vector-bus-sdk-ci
+on:
+  pull_request:
+    paths: [ "vector-bus-sdk/**", "tools/**" ]
+  push:
+    branches: [ "main" ]
+    paths: [ "vector-bus-sdk/**", "tools/**" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Build SDK
+        working-directory: vector-bus-sdk
+        run: npm ci && npm run build
+      - name: Typecheck tools
+        run: npx tsc --noEmit tools/ingest-code.ts
+``
