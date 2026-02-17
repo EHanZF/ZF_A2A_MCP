@@ -1,0 +1,16 @@
+name: helm-validate
+on:
+  workflow_call:
+    inputs:
+      chartPath: { type: string, required: true, default: 'helm/mcp-stack' }
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v3.13.3 }
+      - name: Lint chart
+        run: helm lint ${{ inputs.chartPath }}
+      - name: Template chart
+        run: helm template ${{ inputs.chartPath }} --debug > /dev/null
