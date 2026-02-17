@@ -1,0 +1,16 @@
+local-agent-cdyp7/
+ ├─ src/
+ │   ├─ agent/
+ │   │   ├─ wham_webgl2_renderer.ts     <-- NEW (3D)
+ │   │   ├─ wham_gpu_manifold.ts        <-- NEW (GPU token viz)
+ │   │   ├─ wham_wasm_simd_physics.ts   <-- NEW (WASM SIMD)
+ │   │   ├─ wasm_engine.ts
+ │   │   ├─ identity.ts
+ │   │   ├─ vector.ts
+ │   │   ├─ token_manifold.ts
+ │   │   └─ ...
+ │   ├─ index.ts
+ │   └─ ...
+ ├─ wasm/
+ │   └─ physics_simd.wat
+ └─ ...
