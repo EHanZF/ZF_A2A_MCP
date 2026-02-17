@@ -1,0 +1,30 @@
+name: Agent Orchestrate
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Agent task (e.g., dmn.orchestrate, actions.review)"
+        required: true
+        default: "dmn.orchestrate"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Node setup
+        uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Run routed task
+        env:
+          VECTOR_BUS_URL: ${{ secrets.VECTOR_BUS_URL }}
+          MCP_URL: ${{ secrets.MCP_URL }}
+        run: |
+          node -e "import('./Agents/swarm/routingFabric.js').then(async m => {
+            const out = await new m.RoutingFabric().route({
+              source: 'GHA',
+              task: '${{ github.event.inputs.task }}',
+              payload: {}
+            });
+            console.log(JSON.stringify(out,null,2));
+          })"
