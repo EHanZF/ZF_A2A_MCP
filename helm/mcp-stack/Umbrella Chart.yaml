@@ -1,0 +1,23 @@
+apiVersion: v2
+name: mcp-stack
+description: ZF MCP stack (bridge, server, RAG, orchestrator, plugin-host)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+  - name: mcp-bridge
+    version: 0.1.0
+    repository: "file://charts/mcp-bridge"
+  - name: mcp-server
+    version: 0.1.0
+    repository: "file://charts/mcp-server"
+  - name: rag-service
+    version: 0.1.0
+    repository: "file://charts/rag-service"
+  - name: orchestrator
+    version: 0.1.0
+    repository: "file://charts/orchestrator"
+  - name: plugin-host
+    version: 0.1.0
+    repository: "file://charts/plugin-host"
+``
