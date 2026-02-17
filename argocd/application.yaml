@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zf-mcp-agent
+  namespace: argocd
+spec:
+  project: zf-project
+  source:
+    repoURL: https://github.com/zf/zf-mcp-agent.git
+    targetRevision: main
+    path: helm
+  destination:
+    namespace: zf-mcp
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
