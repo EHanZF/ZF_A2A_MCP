@@ -1,0 +1,192 @@
+name: model-stack-ci
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "vector-bus/**"
+      - "cloudflare-worker/**"
+      - "helm/**"
+      - "tools/**"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "vector-bus/**"
+      - "cloudflare-worker/**"
+      - "helm/**"
+      - ".github/workflows/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+
+  # ----------------------------------------------------------
+  # Lint + Typecheck + Build Matrix
+  # ----------------------------------------------------------
+  build_test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]  # GH Actions doc shows multi-version matrices as best practice
+        # https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        working-directory: tools
+        run: npm ci
+
+      - name: Typecheck tools
+        working-directory: tools
+        run: npx tsc --noEmit
+
+      - name: Build Vector Bus
+        working-directory: vector-bus
+        run: |
+          npm ci
+          npm run build
+
+  # ----------------------------------------------------------
+  # Helm Validation Job
+  # ----------------------------------------------------------
+  helm_validate:
+    runs-on: ubuntu-latest
+    needs: build_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4  # Per Helm documentation
+        # https://helm.sh/docs/ [1](https://www.anthropic.com/news/claude-opus-4-6)
+
+      - name: Lint helm chart
+        run: helm lint helm/mcp-stack
+
+      - name: Template helm chart
+        run: helm template mcp helm/mcp-stack
+
+  # ----------------------------------------------------------
+  # Multi-arch Build + Push to GHCR
+  # ----------------------------------------------------------
+  build_push_ghcr:
+    runs-on: ubuntu-latest
+    needs: build_test
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        # multi-arch build doc: https://docs.docker.com/build/ci/github-actions/ [1](https://www.anthropic.com/news/claude-opus-4-6)
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: GHCR Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        # GHCR authentication is documented here:
+        # https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry [1](https://www.anthropic.com/news/claude-opus-4-6)
+
+      - name: Build & Push Vector Bus (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./vector-bus
+          platforms: linux/amd64,linux/arm64
+          push: true
+          file: ./vector-bus/Dockerfile
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/vector-bus:latest
+
+  # ----------------------------------------------------------
+  # Deploy Cloudflare Worker
+  # ----------------------------------------------------------
+  deploy_worker:
+    runs-on: ubuntu-latest
+    needs: [ build_test, helm_validate ]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Cloudflare Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: cloudflare-worker
+        # Wrangler CI/CD documented here:
+        # https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/ [1](https://www.anthropic.com/news/claude-opus-4-6)
+
+  # ----------------------------------------------------------
+  # Helm Deploy to Cluster (optional auto-deploy)
+  # ----------------------------------------------------------
+  deploy_helm:
+    runs-on: ubuntu-latest
+    needs: [ build_test, helm_validate, build_push_ghcr ]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      # Cluster auth depends on your environment. Example below uses KUBECONFIG secret.
+      - name: Import kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${KUBECONFIG_FILE}" > ~/.kube/config
+        env:
+          KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
+
+      - name: Deploy helm chart
+        run: |
+          helm upgrade --install mcp helm/mcp-stack -n mcp --create-namespace
+
+  # ----------------------------------------------------------
+  # Release On Tags
+  # ----------------------------------------------------------
+  release:
+    runs-on: ubuntu-latest
+    needs: [ build_test, helm_validate ]
+    if: startsWith(github.ref, 'refs/tags/')
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref }}
+          name: "Model Stack Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
