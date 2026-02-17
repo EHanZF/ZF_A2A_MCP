@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestration-dmn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchestration-dmn
+  template:
+    metadata:
+      labels:
+        app: orchestration-dmn
+    spec:
+      containers:
+        - name: orchestration-dmn
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DMN_MODEL_PATH
+              value: "/config/{{ .Values.dmn.configKey }}"
+          volumeMounts:
+            - name: dmn-config
+              mountPath: /config
+      volumes:
+        - name: dmn-config
+          configMap:
+            name: {{ .Values.dmn.configName }}
