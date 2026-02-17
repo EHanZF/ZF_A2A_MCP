@@ -1,0 +1,16 @@
+name = "zf-a2a-orchestration"
+main = "src/index.ts"
+compatibility_date = "2026-02-16"
+
+[durable_objects]
+bindings = [
+  { name = "ONBOARDING_DO", class_name = "OnboardingDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["OnboardingDO"]
+
+[vars]
+MCP_URL = "https://orchestration.example.com/mcp"   # <-- point at your MCP service
+JWT_TTL_SECONDS = "600"
