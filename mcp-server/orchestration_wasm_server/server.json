@@ -1,0 +1,32 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-contract.json",
+  "name": "orchestration_wasm",
+  "version": "1.0.0",
+  "description": "WASM-powered OrchestrationDecisionModel DMN engine.",
+  "tools": [
+    {
+      "name": "evaluate_orchestration_plan",
+      "type": "function",
+      "description": "Evaluate orchestration DMN model via WASM.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "systemStatus": { "type": "string" },
+          "requestType": { "type": "string" },
+          "skillCategory": { "type": "string" },
+          "securityLevel": { "type": "string" },
+          "agentLoad": { "type": "string" },
+          "contextComplexity": { "type": "string" }
+        },
+        "required": [
+          "systemStatus",
+          "requestType",
+          "skillCategory",
+          "securityLevel",
+          "agentLoad",
+          "contextComplexity"
+        ]
+      }
+    }
+  ]
+}
