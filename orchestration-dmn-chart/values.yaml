@@ -1,88 +1,64 @@
-image:
-  repository: ghcr.io/<org>/<repo>/orchestration-mcp
-  tag: "latest"
-  pullPolicy: IfNotPresent
+dmnGateway:
+  enabled: true
 
-service:
-  type: ClusterIP
-  port: 8080
+  image:
+    repository: ghcr.io/OWNER/REPO/dmn-gateway
+    tag: latest
+    pullPolicy: IfNotPresent
+    # imagePullSecrets: ["regcred"]   # optional
 
-dmn:
-  configName: orchestration-dmn-model
-  configKey: dmn-model.json
-  model: |
-    {
-      "dmn-model": {
-        "id": "dmn-orchestration-001",
-        "name": "OrchestrationDecisionModel",
-        "version": "1.0.0",
-        "description": "DMN model governing request routing, skill policy, agent load, and orchestration planning for the IntentManifold Engine.",
-        "inputs": [
-          { "name": "systemStatus", "type": "string" },
-          { "name": "requestType", "type": "string" },
-          { "name": "skillCategory", "type": "string" },
-          { "name": "securityLevel", "type": "string" },
-          { "name": "agentLoad", "type": "string" },
-          { "name": "contextComplexity", "type": "string" }
-        ],
-        "decisions": [
-          {
-            "id": "dec-requestRouting",
-            "name": "Request Routing",
-            "hitPolicy": "FIRST",
-            "inputs": ["systemStatus", "requestType"],
-            "outputs": ["route"],
-            "rules": [
-              ["stable", "command", "local-cache"],
-              ["stable", "analysis", "primary-engine"],
-              ["unstable", "command", "fallback-orchestration"],
-              ["unstable", "analysis", "degraded-cache"],
-              ["offline", "-", "reject"]
-            ]
-          },
-          {
-            "id": "dec-skillPolicy",
-            "name": "Skill Policy",
-            "hitPolicy": "FIRST",
-            "inputs": ["skillCategory", "securityLevel"],
-            "outputs": ["policy"],
-            "rules": [
-              ["core", "low", "allow"],
-              ["core", "medium", "allow"],
-              ["core", "high", "restricted"],
-              ["advanced", "medium", "restricted"],
-              ["advanced", "high", "deny"],
-              ["-", "critical", "deny"]
-            ]
-          },
-          {
-            "id": "dec-agentCapacity",
-            "name": "Agent Capacity",
-            "hitPolicy": "FIRST",
-            "inputs": ["agentLoad", "contextComplexity"],
-            "outputs": ["capacity"],
-            "rules": [
-              ["low", "simple", "light"],
-              ["medium", "simple", "medium"],
-              ["medium", "complex", "heavy"],
-              ["high", "-", "heavy"]
-            ]
-          },
-          {
-            "id": "dec-orchestrationPlan",
-            "name": "Orchestration Plan",
-            "hitPolicy": "FIRST",
-            "inputs": ["route", "policy", "capacity"],
-            "outputs": ["plan", "action"],
-            "rules": [
-              ["local-cache", "allow", "light", "direct-exec", "execute"],
-              ["primary-engine", "allow", "medium", "priority-exec", "execute"],
-              ["primary-engine", "restricted", "medium", "guarded-exec", "review"],
-              ["fallback-orchestration", "allow", "heavy", "retry-local", "reroute"],
-              ["degraded-cache", "restricted", "heavy", "handoff", "delegate"],
-              ["reject", "-", "-", "deny", "stop"]
-            ]
-          }
-        ]
-      }
-    }
+  serviceAccountName: ""              # optional, or bind a custom SA
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  env:
+    - name: PYTHONUNBUFFERED
+      value: "1"
+    - name: PORT
+      value: "8080"
+
+  probes:
+    livenessPath: /healthz
+    readinessPath: /healthz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  metrics:
+    enabled: false
+    path: /metrics
+
+  state:
+    emptyDir: true
+
+  replicas: 1
+
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 75
+    # targetMemoryUtilizationPercentage: 80
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: dmn-gateway.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
