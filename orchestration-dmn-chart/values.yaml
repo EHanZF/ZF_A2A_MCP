@@ -5,60 +5,44 @@ dmnGateway:
     repository: ghcr.io/OWNER/REPO/dmn-gateway
     tag: latest
     pullPolicy: IfNotPresent
-    # imagePullSecrets: ["regcred"]   # optional
-
-  serviceAccountName: ""              # optional, or bind a custom SA
 
   service:
     type: ClusterIP
     port: 80
     targetPort: 8080
 
-  env:
-    - name: PYTHONUNBUFFERED
-      value: "1"
-    - name: PORT
-      value: "8080"
+  identity:
+    agentId: "CDYP7"
+    role: "Requirements-Orchestrator"   # derived from org boundary rules
+    orgBoundary: "BrakeControls"        # department/product boundary
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    hosts:
+      - host: dmn-gateway.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    # If you're using cert-manager, secretName can be created automatically by the issuer
+    tls:
+      - hosts:
+          - dmn-gateway.example.com
+        secretName: dmn-gateway-tls
+
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod   # set to your ClusterIssuer
 
   probes:
     livenessPath: /healthz
     readinessPath: /healthz
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 2
-    failureThreshold: 3
 
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-  metrics:
-    enabled: false
-    path: /metrics
-
-  state:
-    emptyDir: true
-
-  replicas: 1
-
-  autoscaling:
-    enabled: false
-    minReplicas: 2
-    maxReplicas: 5
-    targetCPUUtilizationPercentage: 75
-    # targetMemoryUtilizationPercentage: 80
-
-  ingress:
-    enabled: false
-    className: ""
-    annotations: {}
-    hosts:
-      - host: dmn-gateway.local
-        paths:
-          - path: /
-            pathType: Prefix
-    tls: []
+  env:
+    - name: AGENT_ID
+      value: "CDYP7"
+    - name: AGENT_ROLE
+      value: "Requirements-Orchestrator"
+    - name: ORG_BOUNDARY
+      value: "BrakeControls"
