@@ -1,0 +1,20 @@
+{{- if .Values.dmnGateway.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "orchestration-dmn-chart.fullname" . | default .Release.Name }}-dmn-gateway
+  labels:
+    app.kubernetes.io/name: dmn-gateway
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+spec:
+  type: {{ .Values.dmnGateway.service.type | default "ClusterIP" }}
+  selector:
+    app.kubernetes.io/name: dmn-gateway
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.dmnGateway.service.port | default 80 }}
+      targetPort: {{ .Values.dmnGateway.service.targetPort | default 8080 }}
+      protocol: TCP
+{{- end }}
