@@ -1,0 +1,18 @@
+version: 1
+target: "cost-mapping-lora"
+changes:
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+  runtime:
+    max_seq_len: 4096
+    retriever_top_k: 12
+    chunk_overlap: 64
+  telemetry:
+    enable_trace: true
+    metrics: ["gate_decisions", "fuzz_consumed_tokens", "dmn_eval_latency_ms"]
+  safety:
+    hitl_required: ["supplier_management", "validation"]
+    deny_on: ["'block' in decision"]
