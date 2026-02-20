@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "orchestration-dmn-chart.fullname" . | default .Release.Name }}-agent-cdyp7
+  labels:
+    app.kubernetes.io/name: dmn-gateway
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  # Boundary conditions → permissions for the embedded model identity
+  roleMap.json: |
+    {
+      "agentId": "CDYP7",
+      "orgBoundary": "BrakeControls",
+      "rbac": {
+        "allowTools": [
+          "dmn_gateway.evaluate",
+          "dmn_gateway.reverse_map",
+          "dmn_gateway.gate_release",
+          "vector_fuzzer.clean",
+          "vector_fuzzer.consume"
+        ],
+        "denyTools": [
+          "secrets.read",
+          "iam.policy.write"
+        ]
+      },
+      "safety": {
+        "hitlRequiredFor": ["supplier_management", "validation"],
+        "denyIfDecisionContains": ["block"]
+      }
+    }
+``
