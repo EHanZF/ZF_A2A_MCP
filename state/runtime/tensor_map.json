@@ -1,0 +1,15 @@
+{
+  "map_id": "tensor-map-001",
+  "axes": ["retrieval", "safety", "synthesis", "release"],
+  "adjacency": [
+    [0,1,0,0],
+    [0,0,1,0],
+    [0,0,0,1],
+    [0,0,0,0]
+  ],
+  "labels": {
+    "0->1": "baseline_to_safety",
+    "1->2": "safety_to_plan",
+    "2->3": "plan_to_release"
+  }
+}
