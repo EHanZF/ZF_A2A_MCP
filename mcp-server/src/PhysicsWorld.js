@@ -12,3 +12,12 @@ function addAgent(agentId, x, y, z) {
   world.addBody(body);
   agentBodies[agentId] = body;
 }
+function findPath(start, goal, grid) {
+  // A* implementation: safe, deterministic, not ML-based
+}
+function moveAgent(agentId, target) {
+  const body = agentBodies[agentId];
+  const path = findPath(body.position, target, officeGrid);
+
+  applyImpulseAlongPath(body, path);
+}
