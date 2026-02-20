@@ -1,0 +1,31 @@
+{{- if and .Values.dmnGateway.enabled .Values.dmnGateway.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "orchestration-dmn-chart.fullname" . | default .Release.Name }}-dmn-gateway
+  labels:
+    app.kubernetes.io/name: dmn-gateway
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "orchestration-dmn-chart.fullname" . | default .Release.Name }}-dmn-gateway
+  minReplicas: {{ .Values.dmnGateway.autoscaling.minReplicas | default 2 }}
+  maxReplicas: {{ .Values.dmnGateway.autoscaling.maxReplicas | default 5 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.dmnGateway.autoscaling.targetCPUUtilizationPercentage | default 75 }}
+  {{- if .Values.dmnGateway.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.dmnGateway.autoscaling.targetMemoryUtilizationPercentage }}
+  {{- end }}
+{{- end }}
