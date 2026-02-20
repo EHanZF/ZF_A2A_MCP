@@ -1,0 +1,90 @@
+name: Capsule Build & Vector Prep
+
+on:
+  push:
+    paths:
+      - "lora-library/**"
+      - "services/dmn-gateway/**"
+      - ".github/workflows/capsule-build.yml"
+  workflow_dispatch:
+
+jobs:
+  build-capsule:
+    name: Build & Optimize Capsule
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+
+      - name: Optimize 3D Capsule Asset
+        run: |
+          blender -b --python scripts/optimize_capsule.py -- \
+            --input lora-library/${{ github.sha }}/capsule.obj \
+            --output build/capsule_optimized.obj
+
+      - name: Compute Ingress Dot Product Vector
+        run: |
+          python scripts/calc_ingress_vector.py \
+            --input build/capsule_optimized.obj \
+            --output build/ingress_vector.json
+
+      - name: Standardize Chunking Context
+        run: |
+          python scripts/generate_chunking_context.py \
+            --input build/capsule_optimized.obj \
+            --output build/chunking_context.json
+
+      - name: Build Capsule Manifest
+        run: |
+          python scripts/build_manifest.py \
+            --capsule build/capsule_optimized.obj \
+            --vector build/ingress_vector.json \
+            --chunking build/chunking_context.json \
+            --output build/manifest.json
+
+      - name: Upload Capsule Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: capsule_${{ github.sha }}
+          path: build/
+
+  publish-container:
+    name: Publish Viewer Engine Container
+    needs: build-capsule
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Viewer Engine
+        uses: docker/build-push-action@v6
+        with:
+          context: threejs-engine/
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/threejs-engine:latest
+            ghcr.io/${{ github.repository }}/threejs-engine:${{ github.sha }}
