@@ -1,2 +1,24 @@
-vector-bus-pg:
+dmnGateway:
   enabled: true
+  image:
+    repository: ghcr.io/OWNER/REPO/dmn-gateway
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  env:
+    - name: PYTHONUNBUFFERED
+      value: "1"
+  probes:
+    livenessPath: /healthz
+    readinessPath: /healthz
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+``
