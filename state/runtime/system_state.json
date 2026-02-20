@@ -1,0 +1,16 @@
+{
+  "ticks": 0,
+  "events": [],
+  "services": {
+    "dmn-gateway": {
+      "status": "cold",
+      "port": 8080
+    }
+  },
+  "avatars": {
+    "A2A": {
+      "role": "orchestrator",
+      "shape": "client-api-avatar-v1"
+    }
+  }
+}
