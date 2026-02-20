@@ -1,0 +1,15 @@
+cd services/dmn-gateway
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8080
+curl http://localhost:8080/healthz
+curl -X POST http://localhost:8080/dmn/evaluate \
+  -H "content-type: application/json" \
+  -d @- <<'JSON'
+{
+  "dmn_xml": "<your DMN XML here>",
+  "inputs": { "RequirementChanged": true, "ControlLogicDelta": true, "SupplierImpact": false }
+}
+JSON
+curl -X POST http://localhost:8080/fuzzer/run \
+  -H "content-type: application/json" \
+  -d '{"vectors":[[0.1,0.2,0.3],[0.11,0.21,0.28],[0.9,0.1,0.1],[0.91,0.12,0.11]],"mode":"scrub","cosine_threshold":0.05,"consume_tokens":true}'
