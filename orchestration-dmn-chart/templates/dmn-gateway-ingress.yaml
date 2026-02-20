@@ -7,7 +7,19 @@ metadata:
     app.kubernetes.io/name: dmn-gateway
     app.kubernetes.io/instance: {{ .Release.Name }}
   annotations:
-    {{- toYaml .Values.dmnGateway.ingress.annotations | nindent 4 }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # Embed Agent identity and org boundary role to each request
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Agent-Id "{{ .Values.dmnGateway.identity.agentId }}";
+      proxy_set_header X-Agent-Role "{{ .Values.dmnGateway.identity.role }}";
+      proxy_set_header X-Org-Boundary "{{ .Values.dmnGateway.identity.orgBoundary }}";
+    {{- if and .Values.dmnGateway.ingress.certManager.enabled .Values.dmnGateway.ingress.certManager.clusterIssuer }}
+    cert-manager.io/cluster-issuer: "{{ .Values.dmnGateway.ingress.certManager.clusterIssuer }}"
+    {{- end }}
+    {{- with .Values.dmnGateway.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   {{- if .Values.dmnGateway.ingress.className }}
   ingressClassName: {{ .Values.dmnGateway.ingress.className }}
