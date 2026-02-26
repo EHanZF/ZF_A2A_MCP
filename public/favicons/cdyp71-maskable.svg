@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  width="512" height="512" viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img" aria-label="Agent CDYP71 Copilot Helmet (maskable)"
+  preserveAspectRatio="xMidYMid meet">
+
+  <!--
+    Maskable safe zone:
+    The helmet icon sits centered with generous padding so
+    Android/iOS maskable icons won't clip the content.
+  -->
+
+  <defs>
+    <!-- ZF palette -->
+    <style>
+      .bg { fill: #0F172A; }     /* deep slate (background/outline accents) */
+      .blue { fill: #0A67A3; }   /* primary blue */
+      .blue2{ fill: #0F8DD6; }   /* accent blue */
+      .cream{ fill: #F2E9E0; }   /* light faceplate surround */
+      .ink { fill: #0B2239; }    /* bold line work */
+      .glass{ fill: #1C7EBB; }   /* visor base */
+      .gloss{ fill: #8FD3FF; }   /* visor highlights */
+      .maskc{ fill: #0B2239; }   /* balaclava overlay (dark) */
+      .cut { fill: #000; }       /* for cuts (used in masking) */
+    </style>
+
+    <!-- Rounded device mask hint (non-enforced): -->
+    <clipPath id="maskablePad">
+      <rect x="16" y="16" width="480" height="480" rx="96" ry="96"/>
+    </clipPath>
+
+    <!-- Inner shadow rim -->
+    <linearGradient id="rimShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0B2239" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0B2239" stop-opacity="0.65"/>
+    </linearGradient>
+
+    <!-- Visor gradient -->
+    <linearGradient id="visorGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1C7EBB"/>
+      <stop offset="100%" stop-color="#0A67A3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background tile (transparent for favicon usage) -->
+  <rect width="512" height="512" fill="none"/>
+
+  <g clip-path="url(#maskablePad)">
+    <!-- Outer helmet silhouette (bold ZF style) -->
+    <path
+      class="ink"
+      d="M256,70
+         C162,70 104,128 104,222
+         v34
+         c0,36 10,66 30,89
+         c13,15 22,21 41,31
+         v26
+         c0,14 9,26 22,30
+         c36,11 76,11 112,0
+         c13-4 22-16 22-30
+         v-26
+         c19-10 28-16 41-31
+         c20-23 30-53 30-89
+         v-34
+         C408,128 350,70 256,70 z"/>
+
+    <!-- Helmet shell fill -->
+    <path
+      fill="url(#rimShade)"
+      d="M256,86
+         c-84,0 -138,54 -138,138
+         v28
+         c0,30 7,54 24,74
+         c17,20 31,28 56,40
+         v20
+         c0,6 4,12 10,14
+         c30,9 66,9 96,0
+         c6-2 10-8 10-14
+         v-20
+         c25-12 39-20 56-40
+         c17-20 24-44 24-74
+         v-28
+         c0-84 -54-138 -138-138 z"/>
+
+    <!-- Faceplate surround (cream rim) -->
+    <path
+      class="cream"
+      d="M256,130
+         c-74,0 -116,42 -116,116
+         s42,116 116,116
+         s116-42 116-116
+         s-42-116 -116-116 z"/>
+
+    <!-- Visor (primary blue) -->
+    <path
+      fill="url(#visorGrad)"
+      d="M256,160
+         c-58,0 -90,32 -90,86
+         s32,86 90,86
+         s90-32 90-86
+         s-32-86 -90-86 z"/>
+
+    <!-- Visor highlights -->
+    <circle class="gloss" cx="302" cy="196" r="14" opacity="0.85"/>
+    <rect   class="gloss" x="316" y="220" width="18" height="36" rx="8" opacity="0.65"/>
+    <rect   class="gloss" x="296" y="260" width="14" height="18" rx="6" opacity="0.5"/>
+
+    <!-- Side ear pods (ZF-bold blocks) -->
+    <g>
+      <rect class="ink" x="110" y="218" width="28" height="76" rx="10"/>
+      <rect class="ink" x="374" y="218" width="28" height="76" rx="10"/>
+      <rect class="blue" x="114" y="222" width="20" height="68" rx="8"/>
+      <rect class="blue" x="378" y="222" width="20" height="68" rx="8"/>
+    </g>
+
+    <!-- Balaclava overlay (checkpoint): bold, high-contrast, over visor area -->
+    <path
+      class="maskc"
+      opacity="0.92"
+      d="M166,230
+         c0,-22 10,-38 28,-50
+         c18,-12 42,-18 62,-18
+         c20,0 44,6 62,18
+         c18,12 28,28 28,50
+         v30
+         c0,10 -8,18 -18,18
+         h-32
+         c-6,0 -10,-2 -14,-6
+         c-7,-7 -18,-12 -26,-12
+         s-19,5 -26,12
+         c-4,4 -8,6 -14,6
+         h-32
+         c-10,0 -18,-8 -18,-18
+         v-30 z"/>
+
+    <!-- Mask eye window cutout (lets visor show through) -->
+    <path
+      fill="#0F172A"
+      opacity="0.35"
+      d="M196,254
+         c0,-8 6,-14 14,-14
+         h92
+         c8,0 14,6 14,14
+         v12
+         c0,8 -6,14 -14,14
+         h-92
+         c-8,0 -14,-6 -14,-14
+         v-12 z"/>
+
+    <!-- Chin block (ZF-bold) -->
+    <path
+      class="ink"
+      d="M208,356 h96
+         c6,0 10,4 10,10
+         v16
+         c0,10 -6,18 -16,20
+         c-28,6 -56,6 -84,0
+         c-10,-2 -16,-10 -16,-20
+         v-16
+         c0,-6 4,-10 10,-10 z"/>
+
+    <!-- Blue accent badge -->
+    <rect class="blue2" x="236" y="376" width="40" height="18" rx="6"/>
+  </g>
+</svg>
+``
