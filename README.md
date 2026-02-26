@@ -88,3 +88,9 @@ flowchart TD
     Helm --> DMNGateway
     Workflows --> Helm
     Docs --> Agents
+--- a/README.md
++++ b/README.md
+@@
+ ## Documentation
++
++- **[Agents.md](./How Agents use this repo as a vector store and RAG surface.
