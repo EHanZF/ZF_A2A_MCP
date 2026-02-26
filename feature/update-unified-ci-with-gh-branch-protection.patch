@@ -1,0 +1,5 @@
+git switch -c chore/upgrade-unified-ci
+git apply feature/update-unified-ci-with-gh-branch-protection.patch
+git add -A
+git commit -m "CI: upgrade unified workflow + gh branch-protection + README agent link"
+git push -u origin chore/upgrade-unified-ci
