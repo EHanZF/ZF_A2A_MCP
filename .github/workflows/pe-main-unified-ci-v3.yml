@@ -1,0 +1,290 @@
+name: PE Unified CI (v3)
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  id-token: write     # required for cosign keyless signing
+
+env:
+  NODE_VERSION: 20
+  PYTHON_VERSION: '3.11'
+
+jobs:
+
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+      target_index: ${{ steps.idx.outputs.idx }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate vector spaces & skills
+        id: m
+        run: |
+          python3 scripts/prepare_vector_matrix.py \
+            --sot config/sot.json \
+            --out config/vector_spaces.json \
+            --skills agents/skills/skills.md
+          echo "matrix=$(jq '{vector: .spaces}' config/vector_spaces.json)" >> $GITHUB_OUTPUT
+
+      - name: Generate Target Index
+        id: idx
+        run: |
+          python3 scripts/generate_target_index.py
+          echo "idx=$(cat config/target_index.json)" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: target-index
+          path: config/target_index.json
+
+  live-plan:
+    runs-on: ubuntu-latest
+    needs: prepare-matrix
+    outputs:
+      vector_matrix: ${{ steps.plan.outputs.vector_matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm install -g pnpm
+      - run: pnpm install
+
+      - name: Build Live Plan
+        id: plan
+        env:
+          PE_IDENTITY: CDYP71
+          PE_RBAC_THRESHOLD: '0.1'
+        run: |
+          node scripts/build_live_plan.js
+          echo "vector_matrix=$(jq '.vector_matrix' config/live_plan.json)" >> $GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-plan
+          path: config/live_plan.json
+
+  vector-space-tests:
+    runs-on: ubuntu-latest
+    needs: live-plan
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.live-plan.outputs.vector_matrix) }}
+    env:
+      VECTOR_SPACE: ${{ matrix.vector }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm install -g pnpm
+      - run: pnpm install
+      - run: pnpm test -- --run
+
+  schema-validate:
+    runs-on: ubuntu-latest
+    needs: prepare-matrix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm install -g pnpm
+      - run: pnpm install
+
+      - name: Validate JSON Schemas
+        run: |
+          if [ -d schemas ]; then
+            pnpm run schema:check
+          else
+            echo "No schema directory, skipping."
+          fi
+
+  cosine-gates:
+    runs-on: ubuntu-latest
+    needs: prepare-matrix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cosine gates
+        run: |
+          node -e "
+            const v=require('./config/vector_spaces.json');
+            const t=require('./config/target_index.json');
+            if(!v.centroids || !t.vector_spaces) throw new Error('missing centroid or vector space data');
+          "
+
+  auto-repair-codemod:
+    runs-on: ubuntu-latest
+    needs: [prepare-matrix, vector-space-tests]
+    outputs:
+      patch_exists: ${{ steps.detect.outputs.patch_exists }}
+      patch_path: ${{ steps.detect.outputs.patch_path }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm install -g pnpm
+      - run: pnpm install
+
+      - name: Run codemod
+        run: |
+          mkdir -p auto-repair
+          node scripts/codemod.js || true
+          if git diff --quiet; then
+            echo "{}" > auto-repair/no_changes.json
+          else
+            git diff > auto-repair/auto_repair.patch
+          fi
+
+      - name: Detect patch
+        id: detect
+        run: |
+          if [ -f auto-repair/auto_repair.patch ]; then
+            echo "patch_exists=true" >> $GITHUB_OUTPUT
+            echo "patch_path=auto-repair/auto_repair.patch" >> $GITHUB_OUTPUT
+          else
+            echo "patch_exists=false" >> $GITHUB_OUTPUT
+            echo "patch_path=" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: auto-repair
+          path: auto-repair
+
+  auto-repair-self-apply:
+    needs: auto-repair-codemod
+    if: needs.auto-repair-codemod.outputs.patch_exists == 'true' && vars.ALLOW_AUTOFIX == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply codemod patch
+        run: |
+          git apply auto-repair/auto_repair.patch
+          git add -A
+          git commit -m "Auto-Repair: applied codemod patch via CI"
+          git push
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: auto-repair-self-apply
+          path: auto-repair/auto_repair.patch
+
+  auto-repair-attest:
+    runs-on: ubuntu-latest
+    needs: auto-repair-codemod
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3.4.0
+
+      - name: Prepare attestation subject
+        run: |
+          mkdir -p attest
+          if ${{ needs.auto-repair-codemod.outputs.patch_exists == 'true' }}; then
+            cp auto-repair/auto_repair.patch attest/subject.bin
+          else
+            echo '{"no_changes":true}' > attest/subject.bin
+          fi
+
+      - name: Create attestation
+        run: |
+          cosign sign-blob --yes \
+            --output-signature attest/auto-repair.sig \
+            --output-certificate attest/auto-repair.cert.pem \
+            attest/subject.bin > attest/auto-repair.att.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: auto-repair-attestation
+          path: attest
+
+  pr-auto-reviewer:
+    runs-on: ubuntu-latest
+    needs:
+      - auto-repair-attest
+      - vector-space-tests
+      - schema-validate
+      - cosine-gates
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm install -g pnpm
+      - run: pnpm install
+
+      - name: Build PR Review
+        run: |
+          mkdir -p orchestrator
+          node scripts/build_review.js \
+            --vectors config/vector_spaces.json \
+            --target config/target_index.json \
+            --plan config/live_plan.json \
+            --critic artifacts/critic-report.json \
+            --out orchestrator/handoff.json \
+            --md orchestrator/review.md \
+            --score orchestrator/score.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orchestrator-review
+          path: orchestrator
+
+  enforce-required-checks:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure required checks via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/branches/main/protection \
+            --method PUT \
+            --input - << 'EOF'
+          {
+            "required_status_checks": {
+              "strict": true,
+              "contexts": [
+                "prepare-matrix",
+                "live-plan",
+                "vector-space-tests",
+                "schema-validate",
+                "cosine-gates",
+                "auto-repair-codemod",
+                "auto-repair-attest",
+                "pr-auto-reviewer"
+              ]
+            }
+          }
+EOF
