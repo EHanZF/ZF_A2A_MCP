@@ -1,3 +1,10 @@
+--- a/README.md
++++ b/README.md
+@@
+ ## Documentation
++
++- **[Agents.md](./How Agents use this repo as a vector store and RAG surface.
+
 # 🚀 ZF_A2A_MCP Monorepo
 ### Multi-Agent MCP System for DMN-Driven Orchestration, Vector Flow Management, and EPB Technical Reasoning
 
@@ -88,9 +95,4 @@ flowchart TD
     Helm --> DMNGateway
     Workflows --> Helm
     Docs --> Agents
---- a/README.md
-+++ b/README.md
-@@
- ## Documentation
-+
-+- **[Agents.md](./How Agents use this repo as a vector store and RAG surface.
+
