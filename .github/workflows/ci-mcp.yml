@@ -1,0 +1,92 @@
+# .github/workflows/ci-mcp.yml
+name: CI – MCP Server
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read         # needed by checkout
+  packages: write        # needed for GHCR push
+  id-token: write        # allow OIDC token requests when you deploy to cloud (Azure/AWS/GCP) [1](https://www.npmjs.com/package/@modelcontextprotocol/sdk)
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/mcp-server
+  TAG: ${{ github.sha }}
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build server (TypeScript → dist)
+        run: npm run build
+
+      - name: Start MCP server (background)
+        run: |
+          node dist/index.js &
+          echo "MCP_PID=$!" >> $GITHUB_ENV
+          # give it a moment to boot
+          sleep 3
+
+      - name: Smoke test (MCP tools/list)
+        run: |
+          node -e "
+            import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+            import { StreamableHttpClientTransport } from '@modelcontextprotocol/sdk/client/streamable-http.js';
+            const run = async () => {
+              const c = new Client({ name:'gha', version:'1.0.0' }, {});
+              await c.connect(new StreamableHttpClientTransport('http://localhost:7337/mcp/stream'));
+              const tools = await c.listTools();
+              console.log(JSON.stringify(tools, null, 2));
+              await c.close();
+            };
+            run().catch(e => { console.error(e); process.exit(1); });
+          "
+        # The MCP TypeScript SDK supports Streamable HTTP transport for remote servers. [2](https://github.com/Microsoft/vscode-docs/blob/main/api/get-started/your-first-extension.md)
+
+      - name: Stop MCP server
+        if: always()
+        run: kill $MCP_PID || true
+
+      - name: Login to GHCR
+        run: echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & push image
+        run: |
+          docker build -t $REGISTRY/$IMAGE_NAME:$TAG .
+          docker push $REGISTRY/$IMAGE_NAME:$TAG
+
+      # ---- Optional: Deploy Helm once your cluster creds are available ----
+      # - name: Azure Login (OIDC)
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # # OIDC lets you obtain a short-lived token without long-lived secrets. [3](https://dev.to/anandrmedia/building-an-mcp-server-in-javascript-5133)
+      #
+      # - name: Set kubecontext
+      #   run: az aks get-credentials --resource-group <rg> --name <cluster> --overwrite-existing
+      #
+      # - name: Helm upgrade/install MCP
+      #   run: |
+      #     helm upgrade --install mcp chart/mcp \
+      #       --namespace mcp --create-namespace \
+      #       --set image.repository=$REGISTRY/$IMAGE_NAME \
+      #       --set image.tag=$TAG \
+      #       --set ingress.host=mcp.example.com
