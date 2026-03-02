@@ -1,0 +1,8 @@
+{
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/lint-actions.yml",
+        ".github/workflows/main.yml"
+    ],
+    "security.enableVulnerabilityScanning": false,
+    "redhat.telemetry.enabled": false
+}

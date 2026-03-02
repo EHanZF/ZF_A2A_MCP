@@ -12,69 +12,46 @@
     "url": "https://github.com/EHanZF/ZF_A2A_MCP"
   },
   "categories": [
-    "Other",
-    "Development"
+    "Other"
   ],
   "keywords": [
     "mcp",
     "agent",
-    "scaffolding",
-    "rbac",
-    "github-actions",
-    "ssh-ca"
+    "scaffolding"
   ],
-  "icon": "resources/icon.png",
-  "activationEvents": [
-    "workspaceContains:package.json",
-    "onLanguage:typescript",
-    "onLanguage:json",
-    "onCommand:mcp.scaffoldAgent"
-  ],
-  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "mcp.scaffoldAgent",
         "title": "MCP: Scaffold New Agent",
-        "category": "MCP",
-        "when": "workspaceCount > 0"
-      },
-      {
-        "command": "mcp.createTool",
-        "title": "MCP: Add Tool to Agent",
-        "category": "MCP"
-      },
-      {
-        "command": "mcp.editRBAC",
-        "title": "MCP: Edit RBAC Rules",
         "category": "MCP"
       },
       {
         "command": "mcp.generateWorkflow",
         "title": "MCP: Generate GitHub Actions Workflow",
         "category": "MCP"
-      },
-      {
+      },kspaceContains:package.json",
+      {Language:typescript",
         "command": "mcp.addSSHCAIntegration",
         "title": "MCP: Add SSH CA Integration",
         "category": "MCP"
-      },
-      {
+      },: "./dist/extension.js",
+      {ributes": {
         "command": "mcp.connectToServer",
         "title": "MCP: Connect to MCP Server",
-        "category": "MCP"
-      },
-      {
-        "command": "mcp.listTools",
+        "category": "MCP"caffoldAgent",
+      },"title": "MCP: Scaffold New Agent",
+      { "category": "MCP",
+        "command": "mcp.listTools","
         "title": "MCP: List Available Tools",
         "category": "MCP"
-      },
-      {
+      },"command": "mcp.createTool",
+      { "title": "MCP: Add Tool to Agent",
         "command": "mcp.invokeToolUI",
         "title": "MCP: Invoke Tool (Interactive)",
         "category": "MCP"
-      }
-    ],
+      } "command": "mcp.editRBAC",
+    ],  "title": "MCP: Edit RBAC Rules",
     "views": {
       "explorer": [
         {

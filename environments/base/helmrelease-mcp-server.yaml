@@ -1,0 +1,52 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mcp-server
+  namespace: zf-mcp
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: ./helm/mcp-stack
+      sourceRef:
+        kind: GitRepository
+        name: platform-config
+        namespace: flux-system
+  values:
+    image:
+      repository: ghcr.io/EHanZF/ZF_A2A_MCP/mcp-server
+      digest: sha256:TO_BE_PATCHED_BY_CI
+      pullPolicy: IfNotPresent
+    
+    service:
+      port: 3000
+      targetPort: 3000
+      type: ClusterIP
+    
+    ingress:
+      enabled: true
+      className: nginx
+      host: mcp.example.com
+      tls:
+        enabled: true
+        issuer: letsencrypt-prod
+    
+    autoscaling:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 3
+    
+    # Agent identity (from config)
+    agent:
+      id: "CDYP7"
+      role: "Requirements-Orchestrator"
+      orgBoundary: "BrakeControls"
+    
+    # Vector spaces config
+    vectorSpaces:
+      centroid: 0.95
+      
+  # Flux waits for mcp-base Kustomization
+  dependsOn:
+    - name: mcp-base
+      namespace: flux-system

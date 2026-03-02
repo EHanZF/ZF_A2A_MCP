@@ -1,0 +1,16 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: orchestrator
+spec:
+  values:
+    image:
+      digest: sha256:TO_BE_PATCHED_BY_CI
+    
+    ingress:
+      host: staging-dmn.example.com
+    
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 5

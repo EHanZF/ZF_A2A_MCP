@@ -1,0 +1,8 @@
+{
+  "spaces": [
+    {"vector": "mcp-server", "centroid": 0.95},
+    {"vector": "agent-cdyp7", "centroid": 0.87},
+    {"vector": "orchestrator", "centroid": 0.92}
+  ],
+  "centroids": [0.95, 0.87, 0.92]
+}

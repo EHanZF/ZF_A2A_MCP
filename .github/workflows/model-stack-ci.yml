@@ -27,7 +27,6 @@ permissions:
   id-token: write
 
 jobs:
-jobs:
   dmn-gateway-build:
     name: Build & Test DMN Gateway
     runs-on: ubuntu-latest

@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-03-02T00:00:00Z",
+  "vector_matrix": [
+    {"vector": "mcp-server"},
+    {"vector": "agent-cdyp7"},
+    {"vector": "orchestrator"}
+  ],
+  "routing_rules": [
+    {
+      "source": "GHA",
+      "target": "vector-space-tests",
+      "condition": "PR to main"
+    }
+  ]
+}

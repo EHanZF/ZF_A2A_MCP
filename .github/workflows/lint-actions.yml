@@ -10,13 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run MCP Review Agent
-        run: |
-          npm install -g @modelcontextprotocol/cli
-          mcp run review_github_actions | tee review.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run workflow review
+        run: npm run review:workflows > review.txt 2>&1 || true
+
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
           name: workflow-review
           path: review.txt
-``

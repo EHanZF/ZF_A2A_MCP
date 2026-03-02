@@ -10,3 +10,22 @@ spec:
   sourceRef:
     kind: GitRepository
     name: platform-config   # set to your Flux Source for this repo
+
+# Base manifests for all environments
+resources:
+  - helmrelease-mcp-server.yaml
+  - helmrelease-orchestrator.yaml
+  - canary-base.yaml
+
+# Global namespace
+namespace: zf-mcp
+
+# Labels applied to all resources
+commonLabels:
+  app.kubernetes.io/managed-by: flux
+  app.kubernetes.io/part-of: mcp-stack
+
+# Annotations applied to all resources
+commonAnnotations:
+  config.fluxcd.io/generator: "false"
+

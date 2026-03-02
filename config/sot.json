@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "model_spaces": [
+    {"id": "mcp-server", "model": "mcp", "tier": "production"},
+    {"id": "agent-cdyp7", "model": "agent", "tier": "production"},
+    {"id": "orchestrator", "model": "orchestration", "tier": "production"}
+  ],
+  "sources_of_truth": ["config/vector_spaces.json", "config/target_index.json"]
+}

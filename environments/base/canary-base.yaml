@@ -1,3 +1,52 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Untracked files:
+  (use "git add <file>..." to include in what would be added to cache)
+        vscode-mcp-extension/node_modules/
+        vscode-mcp-extension/package-lock.json
+
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: mcp-server
+  namespace: zf-mcp
+spec:
+  provider: nginx
+  progressDeadlineSeconds: 600
+  
+  # Target the primary deployment created by HelmRelease
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mcp-server
+  
+  # NGINX ingress to manage traffic shifting
+  ingressRef:
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    name: mcp-server
+  
+  service:
+    port: 80
+    targetPort: 3000
+  
+  # Analysis defaults (overridden per-env)
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+      - name: request-duration
+        thresholdRange:
+          max: 500
+        interval: 1m
+=======
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -25,3 +74,4 @@ spec:
       host: to-be-patched.example.com
     autoscaling:
       enabled: false
+>>>>>>> 55b453375d4cabd1788fb9ec33f188ecd744c4a1

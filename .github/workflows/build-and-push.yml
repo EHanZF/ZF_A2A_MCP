@@ -7,6 +7,8 @@ on:
 jobs:
   build-images:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,8 +34,77 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build+push MCP container
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build+push MCP container (multi-arch)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./mcp-server
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository }}/mcp-server:${{ github.sha }}
+
+      - name: Extract and output manifest digest
+        id: digest
         run: |
-          IMAGE=ghcr.io/${{ github.repository }}/orchestration-mcp:${{ github.sha }}
-          docker build -t $IMAGE mcp-server
-          docker push $IMAGE
+          # The build-push-action provides digest in the following format
+          DIGEST="${{ steps.build.outputs.digest }}"
+          echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+          echo "Extracted manifest digest: ${DIGEST}"
+
+  patch-env-digests:
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Stamp digest into env patches
+        env:
+          DIGEST: ${{ needs.build-images.outputs.digest }}
+        run: |
+          set -euo pipefail
+          
+          # Update all env overlays with the new digest
+          yq -i ".spec.values.image.digest = \"${DIGEST}\"" environments/dev/patch-mcp-values.yaml
+          yq -i ".spec.values.image.digest = \"${DIGEST}\"" environments/staging/patch-mcp-values.yaml
+          yq -i ".spec.values.image.digest = \"${DIGEST}\"" environments/prod/patch-mcp-values.yaml
+          
+          echo "Patched env overlays with digest: ${DIGEST}"
+
+      - name: Create release model
+        env:
+          DIGEST: ${{ needs.build-images.outputs.digest }}
+        run: |
+          mkdir -p release-models
+          cat > release-models/${{ github.sha }}.json <<EOF
+          {
+            "commit": "${{ github.sha }}",
+            "timestamp": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "manifestDigest": "${DIGEST}",
+            "images": {
+              "mcp-server": "ghcr.io/${{ github.repository }}/mcp-server:${{ github.sha }}",
+              "orchestrator": "ghcr.io/${{ github.repository }}/orchestrator:${{ github.sha }}"
+            }
+          }
+          EOF
+          cat release-models/${{ github.sha }}.json
+
+      - name: Commit and push digest updates
+        env:
+          DIGEST: ${{ needs.build-images.outputs.digest }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add environments/**/patch-*.yaml release-models/
+          git commit -m "chore: pin multi-arch digest into env patches
+
+          Commit: ${{ github.sha }}
+          Digest: ${DIGEST}" || echo "No changes to commit"
+          git push
