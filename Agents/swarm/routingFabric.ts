@@ -79,6 +79,26 @@ export class RoutingFabric {
       }
 
       // ─────────────────────────────────────────────
+      // Container Build & Push (multi-arch support)
+      // ─────────────────────────────────────────────
+      case "actions.build_and_push": {
+        const ciAgent = getAgentsByRole("ci-agent")[0];
+        const { handleBuildAndPush } = await import("../skills/actions/buildAndPush.js");
+        const out = await handleBuildAndPush(env.payload || {});
+        return { agent: ciAgent.id, response: out };
+      }
+
+      // ─────────────────────────────────────────────
+      // Scaffold a runtime module + spec
+      // ─────────────────────────────────────────────
+      case "actions.scaffold_runtime": {
+        const ciAgent = getAgentsByRole("ci-agent")[0];
+        const { scaffoldRuntime } = await import("../skills/actions/scaffoldRuntime.js");
+        const out = await scaffoldRuntime(env.payload || {});
+        return { agent: ciAgent.id, response: out };
+      }
+
+      // ─────────────────────────────────────────────
       // Vector Bus / RAG
       // ─────────────────────────────────────────────
       case "vector.embed":
@@ -132,6 +152,28 @@ export class RoutingFabric {
         const ciAgent = getAgentsByRole("ci-agent")[0];
         const out = await mcpCall("ci_run_release_checks", env.payload);
         return { agent: ciAgent.id, response: out };
+      }
+
+      // ─────────────────────────────────────────────
+      // Branch Fuzz Testing & PR Creation
+      // ─────────────────────────────────────────────
+      case "branch.fuzz_and_test": {
+        const ciAgent = getAgentsByRole("ci-agent")[0];
+        const { fuzzBranchDiffs } = await import("../ci-agent/fuzzBranchDiffs.js");
+        const out = await fuzzBranchDiffs(env.payload || {});
+        return { agent: ciAgent.id, response: out };
+      }
+
+      case "branch.create_pr": {
+        const ciAgent = getAgentsByRole("ci-agent")[0];
+        const { createPullRequest } = await import("../ci-agent/fuzzBranchDiffs.js");
+        const out = await createPullRequest(
+          env.payload.branch,
+          env.payload.baseBranch,
+          env.payload.title,
+          env.payload.body
+        );
+        return { agent: ciAgent.id, response: { prUrl: out } };
       }
 
       default:

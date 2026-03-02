@@ -1,0 +1,190 @@
+name: MCP Build & Push (RBAC-Enabled)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mcp-server/**'
+      - 'Agents/**'
+      - 'docs/**'
+      - '.github/workflows/ci-mcp-build-and-push.yml'
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Target platforms (comma-separated)'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  NODE_VERSION: 20
+  MCP_SERVER_PORT: 7337
+  REGISTRY_URL: ghcr.io
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    
+    # Identity context for RBAC enforcement
+    env:
+      CI_GITHUB_ACTOR: ${{ github.actor }}
+      CI_ROLE: "developer"
+      CI_ORG_BOUNDARY: ${{ github.repository_owner }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -D @modelcontextprotocol/sdk
+
+      - name: Build MCP server
+        run: |
+          npm run build
+        working-directory: mcp-server
+
+      - name: Start MCP Server with RBAC
+        run: |
+          # Start MCP server in background
+          node mcp-server/dist/index.js &
+          echo "MCP_PID=$!" >> $GITHUB_ENV
+          
+          # Wait for server to be ready
+          sleep 3
+          
+          # Verify health endpoint
+          until curl -f http://localhost:${MCP_SERVER_PORT}/health > /dev/null 2>&1; do
+            echo "Waiting for MCP server..."
+            sleep 1
+          done
+          echo "[✓] MCP Server healthy"
+
+      - name: Obtain GitHub OIDC Token
+        id: oidc
+        run: |
+          # GitHub Actions automatically provides ACTIONS_ID_TOKEN_REQUEST_URL and ACTIONS_ID_TOKEN_REQUEST_TOKEN
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+            echo "Warning: ACTIONS_ID_TOKEN_REQUEST_URL not available in this context"
+            echo "Using CI_GITHUB_ACTOR as primary identity"
+          else
+            echo "OIDC token endpoint available"
+          fi
+
+      - name: Call MCP build-and-push tool
+        id: build
+        run: |
+          node scripts/mcp-invoke.js \
+            --tool "actions.build_and_push" \
+            --input '{
+              "image": "'"$REGISTRY_URL/$GITHUB_REPOSITORY"'",
+              "autoTag": {
+                "sha": "'"$GITHUB_SHA"'",
+                "branch": "'"$GITHUB_REF_NAME"'"
+              },
+              "platforms": '"$(node -e 'console.log(JSON.stringify(process.env.INPUT_PLATFORMS ? process.env.INPUT_PLATFORMS.split(",") : ["linux/amd64", "linux/arm64"]))')"',
+              "emulate": true,
+              "push": ${{ github.event_name == 'push' }},
+              "registry": {
+                "server": "'"$REGISTRY_URL"'",
+                "username": "${{ github.actor }}",
+                "password": "${{ secrets.GITHUB_TOKEN }}",
+                "provider": "ghcr"
+              },
+              "timeouts": {
+                "totalMs": 1800000,
+                "perStepMs": 300000
+              }
+            }' \
+            > mcp-build-result.json 2>&1
+
+      - name: Parse build result
+        id: result
+        run: |
+          if [ -f mcp-build-result.json ]; then
+            cat mcp-build-result.json
+            STATUS=$(jq -r '.result.status' mcp-build-result.json 2>/dev/null || echo "unknown")
+            IMAGE=$(jq -r '.result.image' mcp-build-result.json 2>/dev/null)
+            DIGEST=$(jq -r '.result.digest' mcp-build-result.json 2>/dev/null)
+            
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+            echo "image=$IMAGE" >> $GITHUB_OUTPUT
+            echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+            
+            if [ "$STATUS" == "success" ]; then
+              echo "[✓] Build succeeded"
+              exit 0
+            else
+              echo "[✗] Build failed with status: $STATUS"
+              exit 1
+            fi
+          else
+            echo "[✗] No build result file"
+            exit 1
+          fi
+
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-build-result
+          path: mcp-build-result.json
+          retention-days: 7
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync('mcp-build-result.json', 'utf8'));
+            
+            const comment = `## 🐳 MCP Build & Push Result
+            
+            **Status:** ${ result.result.status === 'success' ? '✅ Success' : '❌ Failed' }
+            **Image:** \`${ result.result.image }\`
+            ${result.result.digest ? `**Digest:** \`${ result.result.digest.slice(0, 12) }...\`` : ''}
+            **Platforms:** ${ result.result.platforms.join(', ') }
+            
+            <details>
+            <summary>Build Details</summary>
+            
+            \`\`\`json
+            ${ JSON.stringify(result.result, null, 2) }
+            \`\`\`
+            </details>`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Stop MCP Server
+        if: always()
+        run: |
+          if [ ! -z "$MCP_PID" ]; then
+            kill $MCP_PID || true
+            sleep 1
+          fi
+
+      - name: Output summary
+        if: always()
+        run: |
+          echo "## MCP Build & Push Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.result.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** ${{ steps.result.outputs.image }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest:** ${{ steps.result.outputs.digest }}" >> $GITHUB_STEP_SUMMARY

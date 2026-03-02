@@ -1,0 +1,184 @@
+{
+  "name": "vscode-mcp-extension",
+  "displayName": "MCP Agent Scaffolding & Debug",
+  "description": "VS Code extension for MCP agent development: scaffold agents, manage RBAC, auto-generate GitHub Actions workflows with SSH CA integration",
+  "version": "1.0.0",
+  "publisher": "zf-a2a",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EHanZF/ZF_A2A_MCP"
+  },
+  "categories": [
+    "Other",
+    "Development"
+  ],
+  "keywords": [
+    "mcp",
+    "agent",
+    "scaffolding",
+    "rbac",
+    "github-actions",
+    "ssh-ca"
+  ],
+  "icon": "resources/icon.png",
+  "activationEvents": [
+    "workspaceContains:package.json",
+    "onLanguage:typescript",
+    "onLanguage:json",
+    "onCommand:mcp.scaffoldAgent"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mcp.scaffoldAgent",
+        "title": "MCP: Scaffold New Agent",
+        "category": "MCP",
+        "when": "workspaceCount > 0"
+      },
+      {
+        "command": "mcp.createTool",
+        "title": "MCP: Add Tool to Agent",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.editRBAC",
+        "title": "MCP: Edit RBAC Rules",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.generateWorkflow",
+        "title": "MCP: Generate GitHub Actions Workflow",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.addSSHCAIntegration",
+        "title": "MCP: Add SSH CA Integration",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.connectToServer",
+        "title": "MCP: Connect to MCP Server",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.listTools",
+        "title": "MCP: List Available Tools",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.invokeToolUI",
+        "title": "MCP: Invoke Tool (Interactive)",
+        "category": "MCP"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "mcp-tools",
+          "name": "MCP Tools",
+          "when": "workspaceCount > 0",
+          "icon": "$(settings-gear)",
+          "contextualTitle": "MCP Agent Tools"
+        },
+        {
+          "id": "mcp-agents",
+          "name": "MCP Agents",
+          "when": "workspaceCount > 0",
+          "icon": "$(device-desktop)",
+          "contextualTitle": "Registered Agents"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "mcp-panel",
+          "title": "MCP Control Panel",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "MCP Extension",
+      "properties": {
+        "mcp.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:7337/mcp/stream",
+          "description": "MCP server URL (Streamable HTTP endpoint)"
+        },
+        "mcp.serverTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "MCP server connection timeout (ms)"
+        },
+        "mcp.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to MCP server on extension activation"
+        },
+        "mcp.enableRBACValidation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable RBAC validation before tool invocation"
+        },
+        "mcp.scaffoldingDir": {
+          "type": "string",
+          "default": "./Agents",
+          "description": "Directory for scaffolded agents"
+        },
+        "mcp.gitHubOrg": {
+          "type": "string",
+          "description": "GitHub organization for SSH CA integration"
+        },
+        "mcp.sshCAEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable SSH Certificate Authority integration"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "mcp.scaffoldAgent",
+        "key": "ctrl+shift+m ctrl+a",
+        "mac": "cmd+shift+m cmd+a",
+        "when": "workspaceCount > 0"
+      },
+      {
+        "command": "mcp.listTools",
+        "key": "ctrl+shift+m ctrl+t",
+        "mac": "cmd+shift+m cmd+t"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild -- --minify",
+    "esbuild": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --target=node18 --format=cjs",
+    "esbuild:watch": "npm run esbuild -- --watch",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src/**/*.ts",
+    "test": "vitest",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "esbuild": "^0.19.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vsce": "^2.15.0",
+    "vitest": "^0.34.0"
+  }
+}

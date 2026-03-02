@@ -179,7 +179,9 @@ export const Agents: AgentSpec[] = [
       "ci.run_tests",
       "ci.build",
       "ci.lint",
-      "ci.release-gate"
+      "ci.release-gate",
+      "actions.build_and_push",
+      "actions.scaffold_runtime"
     ],
     transport: "mcp",
     endpoint: "http://localhost:8080/mcp",

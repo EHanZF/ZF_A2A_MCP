@@ -1,0 +1,70 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "MCP: build_and_push (local registry)",
+      "type": "shell",
+      "command": "mcp run actions.build_and_push --input @.mcp/build.input.local.json",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [],
+      "detail": "Build and push multi-arch image to local registry (localhost:5000)"
+    },
+    {
+      "label": "Docker: start local registry",
+      "type": "shell",
+      "command": "docker run -d --name reg -p 5000:5000 registry:2",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Start a local Docker registry on port 5000",
+      "isBackground": true
+    },
+    {
+      "label": "Docker: stop local registry",
+      "type": "shell",
+      "command": "docker stop reg && docker rm reg",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": [],
+      "detail": "Stop and remove the local registry container"
+    },
+    {
+      "label": "Docker: inspect multi-arch manifest",
+      "type": "shell",
+      "command": "docker buildx imagetools inspect localhost:5000/agentic-demo:sha-localdev",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [],
+      "detail": "Show manifest list digest and platform details"
+    },
+    {
+      "label": "Docker: test AMD64 image",
+      "type": "shell",
+      "command": "docker run --rm --platform=linux/amd64 localhost:5000/agentic-demo:sha-localdev",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [],
+      "detail": "Pull and run the AMD64 image from local registry"
+    },
+    {
+      "label": "Docker: test ARM64 image",
+      "type": "shell",
+      "command": "docker run --rm --platform=linux/arm64 localhost:5000/agentic-demo:sha-localdev",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [],
+      "detail": "Pull and run the ARM64 image from local registry"
+    }
+  ]
+}
