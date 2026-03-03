@@ -1,0 +1,6 @@
+services:
+  mcp:
+    image: ghcr.io/yourorg/mcp-server:${MCP_TAG}
+    env_file:
+      - ../../env/.env.template
+      - ../../env/.env.secrets
