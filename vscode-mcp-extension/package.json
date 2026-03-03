@@ -19,7 +19,13 @@ git commit -m "chore: Add package-lock.json for vscode-mcp-extension
 
 Resolves RHDA vulnerability scanning error (ENOENT: no such file or directory)
 - Enables Red Hat Dependency Analytics to properly analyze npm dependencies
-- Locks transitive dependencies for reproducible builds
+- Locks transitive de# Push change to main → build-and-push triggers
+# Multi-arch image pushed → digest extracted
+# Digest stamped into env patches → Git commit
+# Flux detects Git change → reconciles
+# New image deployed → Flagger canary begins
+# Traffic shifts 10% → metrics evaluated
+# Canary promotes or rolls backpendencies for reproducible builds
 - Required for GitHub Actions security workflows"
 
 git push origin main  "keywords": [
