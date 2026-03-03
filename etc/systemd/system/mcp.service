@@ -1,0 +1,17 @@
+[Unit]
+Description=MCP Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=agentsvc
+Group=agentsvc
+WorkingDirectory=/opt/agents/mcp
+Environment=MCP_API_KEY=REDACTED
+Environment=OPENAI_API_KEY=REDACTED
+ExecStart=/opt/agents/venv/bin/uvicorn mcp_server.app:app --host 127.0.0.1 --port 8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
