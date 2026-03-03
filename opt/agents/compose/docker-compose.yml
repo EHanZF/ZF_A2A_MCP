@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=your.domain
+      - EMAIL=admin@your.domain
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - ../site:/srv/site:ro
+    depends_on:
+      - mcp
+
+  mcp:
+    image: ghcr.io/YOURORG/mcp-server:${MCP_TAG}
+    restart: unless-stopped
+    environment:
+      MCP_API_KEY: ${MCP_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}      # if your MCP uses LLMs
+      RAG_DIR: /data/rag
+    volumes:
+      - ../rag:/data/rag:ro
+    # If your server listens on 8080 internally
+    expose:
+      - "8080"
+
+volumes:
+  caddy_data:
+  caddy_config:
