@@ -1,0 +1,15 @@
+{
+  email {$EMAIL}
+}
+
+{$DOMAIN} {
+  encode zstd gzip
+  handle_path /api/* {
+    reverse_proxy mcp:8080
+  }
+  handle {
+    root * /srv/site
+    try_files {path} /index.html
+    file_server
+  }
+}
