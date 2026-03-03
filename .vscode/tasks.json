@@ -65,6 +65,52 @@
       },
       "problemMatcher": [],
       "detail": "Pull and run the ARM64 image from local registry"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: clean rebuild",
+      "command": "cleanRebuild",
+      "targets": [
+        "[N/A - Select Kit]"
+      ],
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "CMake template clean rebuild task"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: configure",
+      "command": "configure",
+      "problemMatcher": [],
+      "detail": "CMake template configure task"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: install",
+      "command": "install",
+      "problemMatcher": [],
+      "detail": "CMake template install task"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: package",
+      "command": "package",
+      "problemMatcher": [],
+      "detail": "CMake template package task"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: test",
+      "command": "test",
+      "problemMatcher": [],
+      "detail": "CMake template test task"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: workflow",
+      "command": "workflow",
+      "problemMatcher": [],
+      "detail": "CMake template workflow task"
     }
   ]
 }

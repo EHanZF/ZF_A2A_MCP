@@ -14,7 +14,15 @@
   "categories": [
     "Other"
   ],
-  "keywords": [
+git add vscode-mcp-extension/package-lock.json
+git commit -m "chore: Add package-lock.json for vscode-mcp-extension
+
+Resolves RHDA vulnerability scanning error (ENOENT: no such file or directory)
+- Enables Red Hat Dependency Analytics to properly analyze npm dependencies
+- Locks transitive dependencies for reproducible builds
+- Required for GitHub Actions security workflows"
+
+git push origin main  "keywords": [
     "mcp",
     "agent",
     "scaffolding"
