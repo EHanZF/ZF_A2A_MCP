@@ -1,4 +1,17 @@
+name: Agent Packaging
+
+on:
+  pull_request:
+    branches:
+      - "*"
+
 jobs:
+  build-plugin-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Stub build for plugin host"  # Replace with real build
+
   package-agent:
     needs: build-plugin-host
     runs-on: ubuntu-latest
