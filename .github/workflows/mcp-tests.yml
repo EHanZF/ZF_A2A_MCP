@@ -53,4 +53,3 @@ jobs:
       - name: Failure
         if: ${{ failure() }}
         run: echo "❌ MCP tests FAILED on Python ${{ matrix.python-version }}"
-``
