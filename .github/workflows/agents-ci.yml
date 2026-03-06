@@ -75,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -117,17 +118,20 @@ jobs:
     needs: [build-rag]
     steps:
       - uses: actions/checkout@v4
+
       - name: Download RAG pack
         uses: actions/download-artifact@v4
         with:
           name: rag-pack
           path: _rag
+
       - name: Build WASM chat site
         run: |
           npm ci --prefer-offline
           npm run build --workspace ui/chat
           mkdir -p out/site/assets/rag
           cp -r _rag/* out/site/assets/rag/
+
       - name: Upload site artifact
         uses: actions/upload-artifact@v4
         with:
@@ -148,33 +152,3 @@ jobs:
       - name: Prepare SSH key
         shell: bash
         run: |
-          echo "${{ secrets.VM_SSH_KEY }}" > key
-          chmod 600 key
-
-      - name: Upload site & compose
-        shell: bash
-        run: |
-          # Ensure target paths exist
-          ssh -i key -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_SSH_HOST }} "mkdir -p /opt/agents/site /opt/agents/compose"
-          scp -i key -o StrictHostKeyChecking=no -r site/* ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_SSH_HOST }}:/opt/agents/site/
-
-          # Upload docker-compose and Caddyfile if they’re versioned in repo
-          scp -i key -o StrictHostKeyChecking=no infra/compose/docker-compose.yml ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_SSH_HOST }}:/opt/agents/compose/docker-compose.yml
-          scp -i key -o StrictHostKeyChecking=no infra/compose/Caddyfile ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_SSH_HOST }}:/opt/agents/compose/Caddyfile
-
-      - name: Update .env and restart stack
-        shell: bash
-        run: |
-          MCP_TAG="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mcp_tag || 'latest' }}"
-          ssh -i key -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_SSH_HOST }} bash -lc "cat >/opt/agents/compose/.env <<'EOF'
-MCP_TAG=${MCP_TAG}
-MCP_API_KEY=${{ secrets.MCP_API_KEY }}
-OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-DOMAIN=${{ secrets.MCP_DOMAIN }}
-EMAIL=${{ secrets.MCP_ACME_EMAIL }}
-EOF
-cd /opt/agents/compose
-docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-docker compose pull
-docker compose up -d
-"
