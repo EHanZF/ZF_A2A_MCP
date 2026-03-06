@@ -1,154 +1,21 @@
 name: Agents CI/CD
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
-    inputs:
-      py_list:
-        description: 'JSON array of Python versions'
-        default: '["3.10","3.11"]'
-        required: true
-      agent_profiles:
-        description: 'JSON array of agent profiles'
-        default: '["planner","coder"]'
-        required: true
-      environment:
-        description: 'Target environment'
-        type: choice
-        options: [dev, staging, prod]
-        default: dev
-      mcp_tag:
-        description: 'MCP image tag (e.g., latest or short SHA)'
-        default: latest
-        required: true
-      run_e2e:
-        description: 'Run E2E tests after packaging'
-        type: boolean
-        default: false
-
-permissions:
-  contents: read
-  packages: write
-
-concurrency:
-  group: agents-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAMESPACE: YOURORG
+    branches: [ "*" ]
 
 jobs:
-  build-runtimes:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        py: ${{ fromJSON(github.event_name == 'workflow_dispatch' && github.event.inputs.py_list || '["3.10","3.11"]') }}
-        profile: ${{ fromJSON(github.event_name == 'workflow_dispatch' && github.event.inputs.agent_profiles || '["planner","coder"]') }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python ${{ matrix.py }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.py }}
-          cache: 'pip'
-
-      - name: Build agent runtime (profile=${{ matrix.profile }})
-        run: |
-          pip install -r agents/requirements.txt
-          python tools/build_runtime.py \
-            --profile "${{ matrix.profile }}" \
-            --py "${{ matrix.py }}" \
-            --out out/runtime/${{ matrix.profile }}-py${{ matrix.py }}
-      - name: Upload runtime artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: runtime-${{ matrix.profile }}-py${{ matrix.py }}
-          path: out/runtime/${{ matrix.profile }}-py${{ matrix.py }}
-
-  build-mcp-image:
+  build-plugin-host:
+    ...
+  package-agent:
+    needs: build-plugin-host
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push MCP Server image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: infra/mcp/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/mcp-server:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/mcp-server:${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mcp_tag || 'latest' }}
-
-  build-rag:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - name: Build RAG pack
+      - name: Package Copilot agent
         run: |
-          pip install -r rag/requirements.txt
-          python rag/ingest.py --pack default
-          python rag/embed.py --pack default --model "text-embedding-3-large"
-          python rag/package.py --pack default --target browser --out out/rag
-      - name: Upload RAG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: rag-pack
-          path: out/rag
-
-  build-wasm-site:
-    runs-on: ubuntu-latest
-    needs: [build-rag]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download RAG pack
-        uses: actions/download-artifact@v4
-        with:
-          name: rag-pack
-          path: _rag
-
-      - name: Build WASM chat site
-        run: |
-          npm ci --prefer-offline
-          npm run build --workspace ui/chat
-          mkdir -p out/site/assets/rag
-          cp -r _rag/* out/site/assets/rag/
-
-      - name: Upload site artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wasm-site
-          path: out/site
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: [build-mcp-image, build-wasm-site]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download site
-        uses: actions/download-artifact@v4
-        with:
-          name: wasm-site
-          path: site
-
-      - name: Prepare SSH key
-        shell: bash
-        run: |
+          mkdir -p build/agent
+          cp agent/agent.copilot.json build/agent/
+          cp agent/system_prompt_patch.md build/agent/
+          cp public/.well-known/openapi.yaml build/agent/
+          cp copilot-plugin.manifest.json build/agent/
