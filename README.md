@@ -1,5 +1,5 @@
 ## Documentation
-+
+
 **[Agents.md](./How Agents use this repo as a vector store and RAG surface.
 
 # 🚀 ZF_A2A_MCP Monorepo
