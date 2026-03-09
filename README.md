@@ -1,95 +1,74 @@
-## Documentation
-
-**[Agents.md](How Agents use this repo as a vector store and RAG surface.)**
-
-# 🚀 ZF_A2A_MCP Monorepo
-### Multi-Agent MCP System for DMN-Driven Orchestration, Vector Flow Management, and EPB Technical Reasoning
-
-This monorepo contains the complete MCP-based orchestration framework for Agents, DMN microservices, vector management, Helm deployments, CI/CD workflows, and the runtime environment for Agent CDYP7.
-
----
-
-## 📦 Repository Structure (Mermaid Diagram)
-
-```mermaid
 flowchart TD
+  subgraph User[Human + Orchestrator Agent]
+    UQ[User Query / Task]
+    UO[Plan / Orchestrate]
+  end
 
-    subgraph Root["ZF_A2A_MCP Monorepo"]
-        direction TB
+  subgraph MCP[MCP Resource Layer]
+    R1[Resource: ToolsMadeInZF]
+    R2[Resource: ToolsEngineering]
+    R3[Resource: Software Release Level Reference]
+    R4[Resource: EPB PSM Training/Mentoring - ADBY5]
+    R5[Resource: ADBY5 New Hire Tool & Info]
+    R6[Resource: Key User Integrity Knowledge Store]
+    R7[Resource: GenerativeAI Use Cases @ ZF]
+    R8[Resource: Employee Onboarding]
+    R9[Resource: Agent Onboarding]
+  end
 
-        subgraph Agents["Agents/"]
-            direction TB
-            A1["CDYP7 (Primary Orchestrator)"]
-            A2["TSL_ZF_EPB (Tech Specialist Leader)"]
-            A3["FuzzingSubAgent"]
-            A4["DMN Critic"]
-            A5["Safety Auditor"]
-            A6["Synthesizer Agent"]
-        end
+  subgraph Ingest[Ingestion Pipeline]
+    D1[list.get_delta]
+    G1[list.get_items]
+    T1[transform.normalize_text]
+    A1[attachments.extract_text]
+    C1[chunk.apply_strategy]
+    E1[embed.generate_vectors]
+    X1[index.upsert_chunks]
+    S1[security.apply_acls]
+    K1[graph.link_semantics]
+    H1[anchors.repo_link]
+    P1[bus.publish_delta]
+  end
 
-        subgraph MCPServer["mcp-server/"]
-            direction TB
-            M1["index.ts"]
-            M2["Tool Bus Dispatcher"]
-            M3["RBAC + Agent Identity"]
-            M4["Tool Manifest Exporter"]
-        end
+  subgraph Vector[Vector + Index]
+    V1["(Azure Cognitive Search: zf-lists)"]
+    V2["(Embeddings Store)"]
+  end
 
-        subgraph VectorBus["vector-bus/"]
-            direction TB
-            V1["store.ts"]
-            V2["Embedding Schema Validation"]
-            V3["Vector GC / Dedupe / Epoch Compaction"]
-            V4["Mesh Token Flow"]
-        end
+  subgraph Repo[Root GitHub Repo]
+    RG["README + Mermaid (Architecture)"]
+    RI[IaC Modules / Pipelines]
+    RC[Commit Log / PRs]
+  end
 
-        subgraph DMNGateway["services/dmn-gateway/"]
-            direction TB
-            D1["app.py"]
-            D2["dmn_runtime.py"]
-            D3["mcp_dmn_wrapper.py"]
-            D4["fuzzing_agent.py"]
-            D5["vector_mesh.py"]
-            D6["Dockerfile"]
-            D7["requirements.txt"]
-        end
+  subgraph Retrieval[Query + Reason]
+    Q1[index.query_topk]
+    Q2[security.filter_by_identity]
+    Q3[grounding.synthesize_context]
+  end
 
-        subgraph Helm["helm/orchestration-dmn-chart/"]
-            H1["Chart.yaml"]
-            H2["values.yaml"]
-            H3["dmn-gateway-deployment.yaml"]
-            H4["dmn-gateway-service.yaml"]
-            H5["dmn-gateway-ingress.yaml (TLS)"]
-            H6["dmn-gateway-hpa.yaml"]
-        end
+  UQ --> UO --> Q1
 
-        subgraph Workflows[".github/workflows/"]
-            W1["model-stack-ci.yml"]
-            W2["DMN Gateway Build/Push"]
-            W3["Helm Lint/Test"]
-        end
+  R1-.->D1
+  R2-.->D1
+  R3-.->D1
+  R4-.->D1
+  R5-.->D1
+  R6-.->D1
+  R7-.->D1
+  R8-.->D1
+  R9-.->D1
 
-        subgraph State["state/runtime/"]
-            S1["system_state.json"]
-            S2["tensor_map.json"]
-            S3["checkpoint ticks"]
-            S4["Agent Role Bindings"]
-        end
+  D1 --> G1 --> T1 --> A1 --> C1 --> E1 --> X1
+  X1 --> S1 --> K1 --> H1 --> P1
 
-        subgraph Docs["docs/"]
-            O1["Onboarding Guide"]
-            O2["Architecture Overview"]
-            O3["ESOW Ingestion Notes"]
-            O4["Delta Rules"]
-        end
-    end
+  E1 --> V2
+  X1 --> V1
 
-    Agents --> MCPServer
-    MCPServer --> VectorBus
-    MCPServer --> DMNGateway
-    DMNGateway --> State
-    VectorBus --> State
-    Helm --> DMNGateway
-    Workflows --> Helm
-    Docs --> Agents
+  RG --- H1
+  RI --- H1
+  RC --- P1
 
+  Q1 --> Q2 --> Q3 --> UO
+  V1 --> Q1
+  V2 --> Q1
