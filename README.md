@@ -1,7 +1,4 @@
---- a/README.md
-+++ b/README.md
-@@
- ## Documentation
+## Documentation
 +
 +- **[Agents.md](./How Agents use this repo as a vector store and RAG surface.
 
