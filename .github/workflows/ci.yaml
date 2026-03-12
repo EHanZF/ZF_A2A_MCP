@@ -8,12 +8,14 @@ on:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
+        # Node.js 20 is deprecated and will be removed on June 2, 2026.
+        # Consider upgrading to Node.js 24.
+        # See: https://github.blog/changelog/2025-02-13-github-actions-all-actions-will-run-on-node24-instead-of-node20-by-default/
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -37,3 +39,84 @@ jobs:
 
       - name: Lint
         run: npm run lint --if-present
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: 'cyclonedx-json'
+          output-file: 'sbom.json'
+
+      - name: Scan for vulnerabilities
+        uses: anchore/scan-action@v3
+        with:
+          sbom: 'sbom.json'
+          fail-on-severity: critical
+          output-format: 'sarif'
+          output-file: 'grype-report.sarif'
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'grype-report.sarif'
+
+  dmn-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate DMN
+        run: node dmn/validate.js
+
+  dmn-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate DMN Documentation
+        run: node dmn/docgen/dmn-docgen.js
+
+      - name: Upload DMN Docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmn-docs
+          path: dmn/docs/
+
+  dmn-simulation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run DMN Simulation Harness
+        run: node dmn/sim/harness/run-sim.ts
