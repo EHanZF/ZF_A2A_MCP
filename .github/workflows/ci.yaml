@@ -51,3 +51,31 @@ supply-chain:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sbom/grype-report.json
+dmn-validation:
+    needs: telemetry
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate DMN Schemas
+        run: |
+          for f in dmn/models/*.dmn; do
+            echo "Validating $f"
+            node dmn/validators/validate.js $f
+          done
+
+      - name: Run DMN Simulation Tests
+        run: |
+          for f in dmn/models/*.dmn; do
+            echo "Simulating $f"
+            node dmn/validators/simulate.js $f
+          done
