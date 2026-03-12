@@ -1,33 +1,33 @@
-From 9ab1cd2ef34567890 Mon Sep 17 00:00:00 2001
-Subject: [PATCH] Production CI refactor: matrix builds, telemetry layer, router, reviewer
+From 4cbd87f12000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Production CI refactor: matrix builds, telemetry, SBOM, router, reviewer
 
 diff --git a/.github/workflows/ci.yaml b/.github/workflows/ci.yaml
 new file mode 100644
 --- /dev/null
 +++ b/.github/workflows/ci.yaml
-@@ -0,0 +1,110 @@
-+<INSERT FULL ci.yaml CONTENT FROM ABOVE>
+@@ -0,0 +1,220 @@
+<INSERT FULL ci.yaml INCLUDING SBOM/SUPPLYCHAIN FROM ABOVE>
 
 diff --git a/.github/workflows/router.yaml b/.github/workflows/router.yaml
 new file mode 100644
 --- /dev/null
 +++ b/.github/workflows/router.yaml
 @@ -0,0 +1,80 @@
-+<INSERT FULL router.yaml CONTENT FROM ABOVE>
+<INSERT FULL router.yaml CONTENT>
 
 diff --git a/.github/workflows/reviewer-app.yaml b/.github/workflows/reviewer-app.yaml
 new file mode 100644
 --- /dev/null
 +++ b/.github/workflows/reviewer-app.yaml
 @@ -0,0 +1,70 @@
-+<INSERT FULL reviewer-app.yaml CONTENT FROM ABOVE>
+<INSERT FULL reviewer-app.yaml CONTENT>
 
 diff --git a/.github/CODEOWNERS b/.github/CODEOWNERS
 new file mode 100644
 --- /dev/null
 +++ b/.github/CODEOWNERS
 @@ -0,0 +1,20 @@
-+/services/     @team-services
-+/tools/        @team-tooling
-+/models/       @team-dmn
-+/docs/         @team-docs
+/services/     @team-services
+/tools/        @team-tooling
+/models/       @team-dmn
+/docs/         @team-docs
