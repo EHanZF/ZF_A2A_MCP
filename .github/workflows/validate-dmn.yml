@@ -1,29 +1,44 @@
-name: validate-dmn
+name: Validate DMN
 
 on:
   push:
+  pull_request:
 
+# Opt-in to Node.js 24 ahead of GitHub’s required migration.
+# Source: GitHub deprecation guidance for Node 20 → Node 24.
 env:
-  # Ensures actions run on Node.js 24 instead of deprecated Node 20
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   validate:
+    name: Run DMN Validation
     runs-on: ubuntu-latest
 
     steps:
+      # ---- CHECKOUT ----
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---- NODE SETUP ----
       - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
+      # ---- INSTALL DEPENDENCIES ----
       - name: Install dependencies
         run: npm ci
 
+      # ---- VALIDATION STEP ----
       - name: Validate DMN
         run: |
-          echo "Running DMN validation..."
+          echo "Beginning DMN validation..."
+          # Run your validation script with verbose logging so the PR reports clear errors
           npm run validate --if-present --loglevel verbose
+
+      # ---- OPTIONAL: ARTIFACT EXPORT (UNCOMMENT IF NEEDED) ----
+      # - name: Upload validation logs
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: dmn-validation-logs
+      #     path: logs/
