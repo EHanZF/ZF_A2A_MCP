@@ -7,21 +7,40 @@ on:
 jobs:
   supply-chain:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate SBOM with Syft
-        uses: anchore/sbom-action@v0
+      # Install Syft
+      - name: Install Syft
+        uses: anchore/syft-action@v0
+        with:
+          version: latest
 
-      - name: Scan for vulnerabilities with Grype
+      - name: Install Grype
+        uses: anchore/grype-action@v0
+        with:
+          version: latest
+
+      # SBOM Generation
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          mkdir -p sbom
+          syft . -o cyclonedx-json > sbom/sbom.json
+
+      - name: Scan dependencies with Grype
         uses: anchore/scan-action@v3
         with:
-          path: "sbom.spdx.json"
+          path: "sbom/sbom.json"
           fail-on-severity: critical
           output-format: "json"
           output-file: "sbom/grype-report.json"
+
+      # Upload SBOM artifact
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
 
       # Upload SARIF to GitHub security dashboard
       - name: Upload SARIF
@@ -31,8 +50,6 @@ jobs:
 
   dmn-validation:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -60,8 +77,6 @@ jobs:
 
   dmn-docs:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -84,8 +99,6 @@ jobs:
 
   dmn-simulation:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
