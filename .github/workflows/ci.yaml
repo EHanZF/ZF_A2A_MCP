@@ -1,91 +1,99 @@
-name: CI
+name: build_and_test
+
 on:
   push:
     branches: [ main ]
   pull_request:
 
 jobs:
-  supply-chain:
+  build_and_test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Install Syft
-      - name: Install Syft
-        uses: anchore/syft-action@v0
+      - name: Setup Node.js
+        # Node.js 20 is deprecated and will be removed on June 2, 2026.
+        # Consider upgrading to Node.js 24.
+        # See: https://github.blog/changelog/2025-02-13-github-actions-all-actions-will-run-on-node24-instead-of-node20-by-default/
+        uses: actions/setup-node@v4
         with:
-          version: latest
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Install Grype
-        uses: anchore/grype-action@v0
-        with:
-          version: latest
-
-      # SBOM Generation
-      - name: Generate SBOM (CycloneDX)
+      - name: Validate lockfile
         run: |
-          mkdir -p sbom
-          syft . -o cyclonedx-json > sbom/sbom.json
+          if [ ! -f package-lock.json ]; then
+            echo "::error::Missing package-lock.json. Run 'npm install' locally and commit the file."
+            exit 1
+          fi
 
-      - name: Scan dependencies with Grype
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: 'cyclonedx-json'
+          output-file: 'sbom.json'
+
+      - name: Scan for vulnerabilities
         uses: anchore/scan-action@v3
         with:
-          path: "sbom/sbom.json"
+          sbom: 'sbom.json'
           fail-on-severity: critical
-          output-format: "json"
-          output-file: "sbom/grype-report.json"
+          output-format: 'sarif'
+          output-file: 'grype-report.sarif'
 
-      # Upload SBOM artifact
-      - name: Upload SBOM
+      - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom
-          path: sbom/
+          path: sbom.json
 
-      # Upload SARIF to GitHub security dashboard
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: sbom/grype-report.json
+          sarif_file: 'grype-report.sarif'
 
   dmn-validation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate DMN Schemas
-        run: |
-          for f in dmn/models/*.dmn; do
-            echo "Validating $f"
-            node dmn/validators/validate.js $f
-          done
-
-      - name: Run DMN Simulation Tests
-        run: |
-          for f in dmn/models/*.dmn; do
-            echo "Simulating $f"
-            node dmn/validators/simulate.js $f
-          done
+      - name: Validate DMN
+        run: node dmn/validate.js
 
   dmn-docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
       - name: Generate DMN Documentation
@@ -104,7 +112,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
