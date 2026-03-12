@@ -79,3 +79,26 @@ dmn-validation:
             echo "Simulating $f"
             node dmn/validators/simulate.js $f
           done
+          dmn-docs:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate DMN Documentation
+        run: node dmn/docgen/dmn-docgen.js
+
+      - name: Upload DMN Docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmn-docs
+          path: dmn/docs/
