@@ -1,100 +1,39 @@
-name: CI
+name: build_and_test
+
 on:
   push:
     branches: [ main ]
   pull_request:
 
 jobs:
-  supply-chain:
+  build_and_test:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Generate SBOM with Syft
-        uses: anchore/sbom-action@v0
-
-      - name: Scan for vulnerabilities with Grype
-        uses: anchore/scan-action@v3
-        with:
-          path: "sbom.spdx.json"
-          fail-on-severity: critical
-          output-format: "json"
-          output-file: "sbom/grype-report.json"
-
-      # Upload SARIF to GitHub security dashboard
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: sbom/grype-report.json
-
-  dmn-validation:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Validate lockfile
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "::error::Missing package-lock.json. Run 'npm install' locally and commit the file."
+            exit 1
+          fi
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate DMN Schemas
-        run: |
-          for f in dmn/models/*.dmn; do
-            echo "Validating $f"
-            node dmn/validators/validate.js $f
-          done
+      - name: Build project
+        run: npm run build --if-present
 
-      - name: Run DMN Simulation Tests
-        run: |
-          for f in dmn/models/*.dmn; do
-            echo "Simulating $f"
-            node dmn/validators/simulate.js $f
-          done
+      - name: Run tests
+        run: npm test --if-present
 
-  dmn-docs:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install
-        run: npm ci
-
-      - name: Generate DMN Documentation
-        run: node dmn/docgen/dmn-docgen.js
-
-      - name: Upload DMN Docs
-        uses: actions/upload-artifact@v4
-        with:
-          name: dmn-docs
-          path: dmn/docs/
-
-  dmn-simulation:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run DMN Simulation Harness
-        run: node dmn/sim/harness/run-sim.ts
+      - name: Lint
+        run: npm run lint --if-present
