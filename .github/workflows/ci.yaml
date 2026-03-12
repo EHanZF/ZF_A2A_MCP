@@ -1,4 +1,4 @@
-supply-chain:
+    supply-chain:
     needs: telemetry
     runs-on: ubuntu-latest
 
@@ -51,7 +51,7 @@ supply-chain:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sbom/grype-report.json
-dmn-validation:
+    dmn-validation:
     needs: telemetry
     runs-on: ubuntu-latest
 
@@ -102,3 +102,19 @@ dmn-validation:
         with:
           name: dmn-docs
           path: dmn/docs/
+    dmn-simulation:
+    needs: dmn-validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run DMN Simulation Harness
+        run: node dmn/sim/harness/run-sim.ts
