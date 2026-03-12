@@ -1,12 +1,29 @@
 name: validate-dmn
+
 on:
   push:
-    paths: ["dmn/OrchestrationDecisionModel.json", ".github/workflows/validate-dmn.yml"]
-  pull_request:
+
+env:
+  # Ensures actions run on Node.js 24 instead of deprecated Node 20
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Lint JSON
-        run: jq '.' dmn/OrchestrationDecisionModel.json >/dev/null
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate DMN
+        run: |
+          echo "Running DMN validation..."
+          npm run validate --if-present --loglevel verbose
