@@ -10,16 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Syft + Grype
+      # Install Syft
       - name: Install Syft
-        uses: anchore/syft-action@v0
-        with:
-          version: latest
-
-      - name: Install Grype
-        uses: anchore/grype-action@v0
-        with:
-          version: latest
+        uses: anchore/syft-action@v0.11.3
 
       # SBOM Generation
       - name: Generate SBOM (CycloneDX)
@@ -27,22 +20,13 @@ jobs:
           mkdir -p sbom
           syft . -o cyclonedx-json > sbom/sbom.json
 
-      # Vulnerability scanning
       - name: Scan dependencies with Grype
-        id: grype
-        run: |
-          grype sbom/sbom.json \
-            -o json > sbom/grype-report.json || true
-
-      # Fail CI on CRITICAL findings
-      - name: Fail on critical vulns
-        run: |
-          critical=$(jq '.matches[] | select(.vulnerability.severity=="Critical")' sbom/grype-report.json | wc -l)
-          if [ "$critical" -gt 0 ]; then
-            echo "Critical vulnerabilities detected."
-            exit 1
-          fi
-          echo "No critical vulnerabilities."
+        uses: anchore/scan-action@v3
+        with:
+          path: "sbom/sbom.json"
+          fail-on-severity: critical
+          output-format: "json"
+          output-file: "sbom/grype-report.json"
 
       # Upload SBOM artifact
       - name: Upload SBOM
