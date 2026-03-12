@@ -1,104 +1,97 @@
 ```mermaid
-flowchart TD
-   <img width="2222" height="2268" alt="image" src="https://github.com/user-attachments/assets/2f5f339f-4651-4497-9085-2bb5bc3b3b51" />
+flowchart TB
 
+%% ============================
+%% BADGE LEGEND
+%% ============================
+subgraph Legend[Badge Legend]
+    B_STATUS["CI Status"]
+    B_COVERAGE["Test Coverage"]
+    B_SECURITY["Security Scan"]
+end
 
-    %% ============================
-    %% USER LAYER
-    %% ============================
-    subgraph User[Human + Orchestrator Agent]
-        UQ[User Query / Task]
-        UO[Plan / Orchestrate]
-    end
+click B_STATUS "https://github.com/EHanZF/ZF_A2A_MCP/actions/workflows/validate-dmn.yml" "Open CI Workflow"
+click B_COVERAGE "https://github.com/EHanZF/ZF_A2A_MCP/actions" "Open Coverage Workflow"
+click B_SECURITY "https://github.com/EHanZF/ZF_A2A_MCP/security" "Open Security Page"
 
-    %% ============================
-    %% MCP RESOURCE LAYER
-    %% ============================
-    subgraph MCP[MCP Resource Layer]
-        R1[Resource: ToolsMadeInZF]
-        R2[Resource: ToolsEngineering]
-        R3[Resource: Software Release Level Reference]
-        R4[Resource: EPB PSM Training/Mentoring - ADBY5]
-        R5[Resource: ADBY5 New Hire Tool & Info]
-        R6[Resource: Key User Integrity Knowledge Store]
-        R7[Resource: GenerativeAI Use Cases @ ZF]
-        R8[Resource: Employee Onboarding]
-        R9[Resource: Agent Onboarding]
-    end
+%% ============================
+%% ARCHITECTURE DIAGRAM
+%% ============================
+subgraph User[User Layer]
+    UQ[User Query]
+    UO[Orchestrator]
+end
 
-    %% ============================
-    %% INGEST LAYER
-    %% ============================
-    subgraph Ingest[Ingestion Pipeline]
-        D1[list.get_delta]
-        G1[list.get_items]
-        T1[transform.normalize_text]
-        A1[attachments.extract_text]
-        C1[chunk.apply_strategy]
-        E1[embed.generate_vectors]
-        X1[index.upsert_chunks]
-        S1[security.apply_acls]
-        K1[graph.link_semantics]
-        H1[anchors.repo_link]
-        P1[bus.publish_delta]
-    end
+subgraph MCP[MCP Resources]
+    R1[ToolsMadeInZF]
+    R2[ToolsEngineering]
+    R3[ReleaseRef]
+    R4[EPB_PSM_Training]
+    R5[ADBY5_Onboarding]
+    R6[Integrity_Knowledge]
+    R7[GenAI_UseCases]
+    R8[Employee_Onboarding]
+    R9[Agent_Onboarding]
+end
 
-    %% ============================
-    %% VECTOR STORE
-    %% ============================
-    subgraph Vector[Vector + Index]
-        V1["(Azure Cognitive Search: zf-lists)"]
-        V2["(Embeddings Store)"]
-    end
+subgraph Ingest[Ingestion]
+    D1[delta]
+    G1[get_items]
+    T1[normalize_text]
+    A1[extract_text]
+    C1[chunk]
+    E1[embed]
+    X1[upsert]
+    S1[apply_acls]
+    K1[link_semantics]
+    H1[repo_link]
+    P1[publish]
+end
 
-    %% ============================
-    %% GITHUB ROOT REPO
-    %% ============================
-    subgraph Repo[Root GitHub Repo]
-        RG["README + Mermaid (Architecture)"]
-        RI[IaC Modules / Pipelines]
-        RC[Commit Log / PRs]
-    end
+subgraph Vector[Vector & Index]
+    V1[SearchIndex]
+    V2[EmbeddingStore]
+end
 
-    %% ============================
-    %% RETRIEVAL
-    %% ============================
-    subgraph Retrieval[Query + Reason]
-        Q1[index.query_topk]
-        Q2[security.filter_by_identity]
-        Q3[grounding.synthesize_context]
-    end
+subgraph Repo[Repo]
+    RG[README]
+    RI[IaC]
+    RC[Commits]
+end
 
-    %% ============================
-    %% FLOWS
-    %% ============================
-    UQ --> UO --> Q1
-    R1-.->D1
-    R2-.->D1
-    R3-.->D1
-    R4-.->D1
-    R5-.->D1
-    R6-.->D1
-    R7-.->D1
-    R8-.->D1
-    R9-.->D1
-    D1 --> G1 --> T1 --> A1 --> C1 --> E1 --> X1
-    X1 --> S1 --> K1 --> H1 --> P1
-    E1 --> V2
-    X1 --> V1
-    RG --- H1
-    RI --- H1
-    RC --- P1
-    Q1 --> Q2 --> Q3 --> UO
-    V1 --> Q1
-    V2 --> Q1
+subgraph Retrieval[Retrieval]
+    Q1[query_topk]
+    Q2[filter_identity]
+    Q3[synthesize]
+end
 
-    %% ============================
-    %% CLICKABLE LINKS
-    %% ============================
-    click RG "https://github.com/EHanZF/ZF_A2A_MCP" "Open README"
-    click RI "https://github.com/EHanZF/ZF_A2A_MCP/tree/main/infra" "Infrastructure Modules"
-    click RC "https://github.com/EHanZF/ZF_A2A_MCP/commits/main" "Commit History"
-    click P1 "https://github.com/EHanZF/ZF_A2A_MCP/actions" "CI/CD Pipelines"
-    click V1 "https://learn.microsoft.com/azure/search/search-what-is-azure-search" "Azure Cognitive Search Docs"
-    click V2 "https://platform.openai.com/docs/guides/embeddings" "Embeddings Store Docs"
+%% ============================
+%% FLOWS
+%% ============================
+UQ --> UO --> Q1
+R1 -.-> D1
+R2 -.-> D1
+R3 -.-> D1
+R4 -.-> D1
+R5 -.-> D1
+R6 -.-> D1
+R7 -.-> D1
+R8 -.-> D1
+R9 -.-> D1
+D1 --> G1 --> T1 --> A1 --> C1 --> E1 --> X1
+X1 --> S1 --> K1 --> H1 --> P1
+E1 --> V2
+X1 --> V1
+RG --- H1
+RI --- H1
+RC --- P1
+Q1 --> Q2 --> Q3 --> UO
+V1 --> Q1
+V2 --> Q1
+
+%% ============================
+%% OPTIONAL CLICKABLES FOR REPO NODES
+%% ============================
+click RG "https://github.com/EHanZF/ZF_A2A_MCP" "Open Repo Root"
+click RC "https://github.com/EHanZF/ZF_A2A_MCP/commits/main" "Commit History"
+click RI "https://github.com/EHanZF/ZF_A2A_MCP/tree/main/infra" "Infrastructure Files"
