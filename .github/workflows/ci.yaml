@@ -1,18 +1,23 @@
-    supply-chain:
-    needs: telemetry
-    runs-on: ubuntu-latest
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
 
+jobs:
+  supply-chain:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       # Install Syft + Grype
       - name: Install Syft
-        uses: anchore/syft-action@v1
+        uses: anchore/syft-action@v0
         with:
           version: latest
 
       - name: Install Grype
-        uses: anchore/grype-action@v1
+        uses: anchore/grype-action@v0
         with:
           version: latest
 
@@ -51,10 +56,9 @@
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sbom/grype-report.json
-    dmn-validation:
-    needs: telemetry
-    runs-on: ubuntu-latest
 
+  dmn-validation:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -79,10 +83,9 @@
             echo "Simulating $f"
             node dmn/validators/simulate.js $f
           done
-          dmn-docs:
-    needs: build-test
-    runs-on: ubuntu-latest
 
+  dmn-docs:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -102,16 +105,15 @@
         with:
           name: dmn-docs
           path: dmn/docs/
-    dmn-simulation:
-    needs: dmn-validation
-    runs-on: ubuntu-latest
 
+  dmn-simulation:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
 
       - name: Install dependencies
         run: npm ci
