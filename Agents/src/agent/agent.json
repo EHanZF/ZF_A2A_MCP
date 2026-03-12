@@ -1,0 +1,10 @@
+{
+  "agent": "CDYP71",
+  "skill": "cat5_system_release_process",
+  "tests": {
+    "dmn_simulation": {
+      "nightly": true,
+      "results_artifact": "dmn-simulation-results"
+    }
+  }
+}
