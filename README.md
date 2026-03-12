@@ -1,5 +1,6 @@
 ```mermaid
 flowchart TD
+    <img width="4032" height="833" alt="image" src="https://github.com/user-attachments/assets/bf840586-f205-4b91-86f1-130fcadbf32d" />
 
     %% ============================
     %% USER LAYER
