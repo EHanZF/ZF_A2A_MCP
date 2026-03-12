@@ -4,94 +4,51 @@ flowchart TB
 %% ============================
 %% BADGE LEGEND
 %% ============================
-subgraph Legend[Badge Legend]
-    B_STATUS["CI Status"]
-    B_COVERAGE["Test Coverage"]
-    B_SECURITY["Security Scan"]
+subgraph Legend["Legend / Status"]
+    B_STATUS["coverage: 84%"]
+    B_LINT["lint: clean"]
+    B_BUILD["build: passing"]
 end
 
-click B_STATUS "https://github.com/EHanZF/ZF_A2A_MCP/actions/workflows/validate-dmn.yml" "Open CI Workflow"
-click B_COVERAGE "https://github.com/EHanZF/ZF_A2A_MCP/actions" "Open Coverage Workflow"
-click B_SECURITY "https://github.com/EHanZF/ZF_A2A_MCP/security" "Open Security Page"
+click B_STATUS "https://github.com/EHanZF/ZF_A2A_MCP/actions" "Open Coverage Workflow"
+click B_LINT "https://github.com/EHanZF/ZF_A2A_MCP/actions" "Open Linting"
+click B_BUILD "https://github.com/EHanZF/ZF_A2A_MCP/actions" "Open Build Status"
 
 %% ============================
-%% ARCHITECTURE DIAGRAM
+%% RESOURCES (docs/resources)
 %% ============================
-subgraph User[User Layer]
-    UQ[User Query]
-    UO[Orchestrator]
-end
-
-subgraph MCP[MCP Resources]
-    R1[ToolsMadeInZF]
-    R2[ToolsEngineering]
-    R3[ReleaseRef]
-    R4[EPB_PSM_Training]
-    R5[ADBY5_Onboarding]
-    R6[Integrity_Knowledge]
-    R7[GenAI_UseCases]
-    R8[Employee_Onboarding]
-    R9[Agent_Onboarding]
-end
-
-subgraph Ingest[Ingestion]
-    D1[delta]
-    G1[get_items]
-    T1[normalize_text]
-    A1[extract_text]
-    C1[chunk]
-    E1[embed]
-    X1[upsert]
-    S1[apply_acls]
-    K1[link_semantics]
-    H1[repo_link]
-    P1[publish]
-end
-
-subgraph Vector[Vector & Index]
-    V1[SearchIndex]
-    V2[EmbeddingStore]
-end
-
-subgraph Repo[Repo]
-    RG[README]
-    RI[IaC]
-    RC[Commits]
-end
-
-subgraph Retrieval[Retrieval]
-    Q1[query_topk]
-    Q2[filter_identity]
-    Q3[synthesize]
+subgraph Resources["Resources (docs/resources)"]
+    R1["R1 · ToolsMadeInZF"]
+    R2["R2 · ToolsEngineering"]
+    R3["R3 · Software Release Level Ref"]
+    R4["R4 · EPB PSM Training (ADBY5)"]
+    R5["R5 · ADBY5 New Hire Tool & Info"]
+    R6["R6 · Key User Integrity Store"]
+    R7["R7 · GenAI Use Cases @ ZF"]
+    R8["R8 · Employee Onboarding"]
+    R9["R9 · Agent Onboarding"]
 end
 
 %% ============================
-%% FLOWS
+%% CLICKABLE LINKS FOR R1–R9
 %% ============================
-UQ --> UO --> Q1
-R1 -.-> D1
-R2 -.-> D1
-R3 -.-> D1
-R4 -.-> D1
-R5 -.-> D1
-R6 -.-> D1
-R7 -.-> D1
-R8 -.-> D1
-R9 -.-> D1
-D1 --> G1 --> T1 --> A1 --> C1 --> E1 --> X1
-X1 --> S1 --> K1 --> H1 --> P1
-E1 --> V2
-X1 --> V1
-RG --- H1
-RI --- H1
-RC --- P1
-Q1 --> Q2 --> Q3 --> UO
-V1 --> Q1
-V2 --> Q1
+click R1 "docs/resources/r1-tools-made-in-zf.md" "Open R1"
+click R2 "docs/resources/r2-tools-engineering.md" "Open R2"
+click R3 "docs/resources/r3-software-release-level-reference.md" "Open R3"
+click R4 "docs/resources/r4-epb-psm-training-mentoring-adby5.md" "Open R4"
+click R5 "docs/resources/r5-adby5-new-hire-tool-and-info.md" "Open R5"
+click R6 "docs/resources/r6-key-user-integrity-knowledge-store.md" "Open R6"
+click R7 "docs/resources/r7-generativeai-use-cases-at-zf.md" "Open R7"
+click R8 "docs/resources/r8-employee-onboarding.md" "Open R8"
+click R9 "docs/resources/r9-agent-onboarding.md" "Open R9"
 
 %% ============================
-%% OPTIONAL CLICKABLES FOR REPO NODES
+%% FLOW BETWEEN RESOURCES
 %% ============================
-click RG "https://github.com/EHanZF/ZF_A2A_MCP" "Open Repo Root"
-click RC "https://github.com/EHanZF/ZF_A2A_MCP/commits/main" "Commit History"
-click RI "https://github.com/EHanZF/ZF_A2A_MCP/tree/main/infra" "Infrastructure Files"
+R1 --> R2
+R2 --> R3
+R3 --> R4
+R3 --> R6
+R4 --> R5
+R6 --> R7
+R8 --> R9
