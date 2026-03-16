@@ -1,3 +1,0 @@
-- name: vector-bus-pg
-  version: 0.1.0
-  repository: "file://charts/vector-bus-pg"
