@@ -1,9 +1,0 @@
-{
-  "program": "C121",
-  "airgap": "C121_BIN",
-  "tsr_verdict": "FAIL",
-  "dvr_status": "APPROVED",
-  "open_defects_summary": { "critical": 1, "major": 0, "minor": 0 },
-  "safety_coverage": "CONFIRMED",
-  "requirements_coverage": "CONFIRMED"
-}

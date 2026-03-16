@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-pydantic>=2.5
-orjson>=3.9.10
-
-# Backends (pick by env)
-redis>=5.0.1
-asyncpg>=0.29.0
